@@ -28,6 +28,32 @@ client:
 3. to-doListBody.txt - only the html *body* for to-doList which includes ajax that will send on each button clicking
 
 
+---------------------------
+Client walkthrough: Open Browser -> enter: "localhost:80/index.html". This is a 'template'
+of an html file which will be used to dynamcally show all the app screens. This file is
+send to the user (the browser), together with a .js file called 'init.js' or something.
+This file will automatically execute a call to a javascript function which will create
+a xmlHttpRequest of 'get' with resource 'login' - this will cause the server to access
+a static partial html file (only its body content) called 'loginRegister' which will show
+the user the login in screen.
+This loginRegister.html will include a .js script to allow the 'button' to be meaningful.
+OnClick of loginButton should create another xmlHttpRequest, this time of type 'post' with
+resource '/login'.
+If the user is not authorized - some error will be returned, and the screen will prompt it.
+This will be done by simply changing some value of a the html using: innerHtml = res.body;
+Otherwise: a <div> content will be sent, so we need to place the current displayed div with
+ this new div. we do so by typing: innerHtml = res.body. Inside this 'res.body', will
+  be a <script> </script> tags, which will cause the browser to request yet another .js
+  file called 'todoScript.js', which will introduce all the functions of the 'todoApp'.
+  Important: this file should also include a function called 'showAll()', which will cause
+  an xmlHttpRequest to be sent to the server to get all the values of the current logged in
+   user. (The server will return a actual html with the data and the client should set
+   the innerHTML accordingly). This showAll() function MUST be invoked automtically at
+   the first time.
+   Other methods will be inside this file. like 'add()' which will simply concatenate
+   to the innerHTML, or delete which will remove by table row elementID (id's are unique).
+
+
 var static = webServer.static('/staticResources');
 ???????
 var showAllToDoList = function(req) {
