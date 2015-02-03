@@ -27,10 +27,59 @@ $(document).ready(function() {
     //}
 
     // working example:
-    $.get("/test", function(data){
-        var val = data['content'];
-        $("#mainDiv").html(val);
+    //$.get("/test", function(data){
+    //    var val = data['content'];
+    //    $("#mainDiv").html(val);
+    //});
+
+
+    $.ajax({
+        type: "POST",
+        url: "/item",
+        cache: false,
+        data: {'id': 0, 'value': 'first comment'},
+        success: function (data) {
+            var content = printToConsole(data);
+            $("#mainDiv").html(content);
+        }
     });
+
+    $.ajax({
+        type: "POST",
+        url: "/item",
+        cache: false,
+        data: {'id': 1, 'value': 'second comment'},
+        success: function (data) {
+            var content = printToConsole(data);
+            $("#mainDiv").html(content);
+        }
+    });
+
+    // maybe there is a bug for this request !!
+    //$.get("/item", function(data){
+    //    var content = printToConsole(data);
+    //
+    //    $("#mainDiv").html(content);
+    //});
+
+    $.ajax({
+        type: "GET",
+        url: "/item",
+        success: function (data) {
+            var content = printToConsole(data);
+            $("#mainDiv").html(content);
+        }
+    });
+
+    $.ajax({
+        type: "GET",
+        url: "/item",
+        success: function (data) {
+            var content = printToConsole(data);
+            $("#mainDiv").html(content);
+        }
+    });
+
 
 
 
@@ -63,3 +112,31 @@ $(document).ready(function() {
 });
 
 
+function printToConsole(data) {
+    var status = data['status'];
+    var msg = data['msg'];
+    var content = "status: ";
+
+    if (status === 0) {
+        content += "success; msg is: ";
+
+        for (var i= 0, leng = msg.length; i<leng; i++) {
+            content += '[id: ' + msg[i]['id'] + ', content: \'' + msg[i]['content'] + '\', status: ';
+            if (msg[i]['status'] === 0) {
+                content += 'success]\t';
+            }
+            else {
+                content += 'failure]\t';
+            }
+        }
+    }
+    else if (status === 1) {
+        content += "failure; msg is: " + msg.toString();
+    }
+
+    content += "\n";
+
+    console.log(content);
+
+    return content;
+}

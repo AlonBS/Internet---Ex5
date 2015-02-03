@@ -6,75 +6,142 @@
 // todo maybe we should use 'const' instead of 'var' (checks ES !)
 var FAILURE_STATUS = 1;
 var SUCCESS_STATUS = 0;
+var ACTIVE_ITEM_CODE = 0;
+var COMPLETED_ITEM_CODE = 1;
 var USERNAME_IN_USED = 'This username in used';
 var UNAUTHORIZED_USER = 'Unauthorized user';
 var INVALID_ITEM_ID = 'invalid itemId';
 
 
 function DataModule() {
-    // key: username, value: {'password': password, 'sessionId': sessionId, 'fullName': fullName, 'listLength': 0,
-    // 'todoList': array of {'content': content, 'status': 'inProcess/completed'}}
+    // key: username, value: {'password': password, 'sessionId': sessionId, 'fullName': fullName,
+    // 'todoList': array of {'id': itemId, 'content': content, 'status': 'inProcess/completed'}}
     this.data = {};
+
+    // for debug use
+    this.data['tal'] = {'password': 'pass', 'sessionId': '0', 'fullName': 'fullName', 'lastConn': new Date(), 'todoList': []};
+    // end debug
 }
 
 DataModule.prototype.addUser = function(username, password, sessionId, fullName) {
-    //var that = this;
 
     if (this.isRegisteredUser(username)) {
         return {'status': FAILURE_STATUS, 'msg': USERNAME_IN_USED};
     }
 
-    this.data[username] = {'password': password, 'sessionId': sessionId, 'fullName': fullName, 'listLength': 0, 'todoList': []};
+    this.data[username] = {'password': password, 'sessionId': sessionId, 'fullName': fullName, 'lastConn': new Date(), 'todoList': []};
 
-    return {'status': SUCCESS_STATUS};
+    return {'status': SUCCESS_STATUS, 'msg': ''};
 };
 
 
-DataModule.prototype.addToDo = function(username, sessionId, content) {
+DataModule.prototype.addToDo = function(username, sessionId, itemId, content) {
     if (this.isValidRequest(username, sessionId)) {
-        this.data[username]['todoList'].push({'content': content, 'status': 'inProcess'});
-        this.data[username]['listLength'] = this.data[username]['listLength']+1;
-        return {'status': SUCCESS_STATUS};
+
+        // todo: i need to verify that itemId does not exist !!
+
+        this.data[username]['todoList'].push({'id': itemId, 'content': content, 'status': ACTIVE_ITEM_CODE});
+        this.updateLastConnection(username);
+        return {'status': SUCCESS_STATUS, 'msg': ''};
     }
 
     return {'status': FAILURE_STATUS, 'msg': UNAUTHORIZED_USER};
 };
 
-DataModule.prototype.changeTodoStatus = function(username, sessionId, itemId, newStatus) {
+
+DataModule.prototype.changeTodoItem = function(username, sessionId, itemId, newStatus, newContent) {
+    var index;
+
     if (this.isValidRequest(username, sessionId)) {
-        if (!this.isValidItemId(username, itemId)) {
-            return {'status': FAILURE_STATUS, 'msg': INVALID_ITEM_ID};
+
+        index = this.getListIndex(username, itemId);
+
+        if (index !== -1) {
+            //console.log("before- status: " + this.data[username]['todoList'][index]['status'] + ", content: " +
+            //    this.data[username]['todoList'][index]['content']);
+
+            if (newStatus === ACTIVE_ITEM_CODE || newStatus === COMPLETED_ITEM_CODE) {
+                this.data[username]['todoList'][index]['status'] = newStatus;
+            }
+
+            if (newContent !== undefined) {
+                this.data[username]['todoList'][index]['content'] = newContent;
+            }
+
+            //console.log("after- status: " + this.data[username]['todoList'][index]['status'] + ", content: " +
+            //this.data[username]['todoList'][index]['content']);
+
+            this.updateLastConnection(username);
+
+            return {'status': SUCCESS_STATUS, 'msg': ''};
         }
 
-        this.data[username]['todoList'][itemId]['status'] = newStatus;
-        return {'status': SUCCESS_STATUS};
+        return {'status': FAILURE_STATUS, 'msg': INVALID_ITEM_ID};
     }
 
     return {'status': FAILURE_STATUS, 'msg': UNAUTHORIZED_USER};
 };
+
+
 
 
 DataModule.prototype.deleteTodoItem = function(username, sessionId, itemId) {
+    var index;
+
     if (this.isValidRequest(username, sessionId)) {
-        if (!this.isValidItemId(username, itemId)) {
-            return {'status': FAILURE_STATUS, 'msg': INVALID_ITEM_ID};
+        if (itemId === -1) {
+            this.deleteAllCompleted(username);
+            return {'status': SUCCESS_STATUS, 'msg': ''};
         }
 
-        this.data[username]['todoList'].slice(itemId, 1);
-        this.data[username]['listLength'] = this.data[username]['listLength']-1;
+        index = this.getListIndex(username, itemId);
 
-        return {'status': SUCCESS_STATUS};
+        if (index !== -1) {
+            this.data[username]['todoList'].slice(index, 1);
+            this.updateLastConnection(username);
+            return {'status': SUCCESS_STATUS, 'msg': ''};
+        }
+
+        return {'status': FAILURE_STATUS, 'msg': INVALID_ITEM_ID};
     }
 
     return {'status': FAILURE_STATUS, 'msg': UNAUTHORIZED_USER};
+};
+
+
+DataModule.prototype.getListIndex = function(username, itemId) {
+    var i;
+    var listArray = this.data[username]['todoList'];
+    var len = listArray.length;
+
+    for (i=0; i<len; i++) {
+        if (listArray[i]['id'] === itemId) {
+            return i;
+        }
+    }
+
+    return -1;
+};
+
+
+DataModule.prototype.deleteAllCompleted = function(username) {
+    var i;
+    var listArray = this.data[username]['todoList'];
+    var len = listArray.length;
+
+    for (i=0; i<len; i++) {
+        if (listArray[i]['status'] === COMPLETED_ITEM_CODE) {
+            this.data[username]['todoList'].slice(i, 1);
+        }
+    }
 };
 
 
 DataModule.prototype.getAllTodoList = function(username, sessionId) {
 
     if (this.isValidRequest(username, sessionId)) {
-        return {'status': SUCCESS_STATUS, 'msg': {'listLength': this.data[username]['listLength'],
-            'todoList': this.data[username]['todoList']}};
+        this.updateLastConnection(username);
+        return {'status': SUCCESS_STATUS, 'msg': this.data[username]['todoList']};
     }
 
     return {'status': FAILURE_STATUS, 'msg': UNAUTHORIZED_USER};
@@ -82,18 +149,26 @@ DataModule.prototype.getAllTodoList = function(username, sessionId) {
 
 
 DataModule.prototype.isRegisteredUser = function (username) {
-    //var that = this;
-    return (this.data[username] !== undefined)
+    return (this.data[username] !== undefined);
 };
 
-
-DataModule.prototype.isValidItemId = function(username, itemId) {
-    return (itemId > -1 && itemId < this.data[username]['listLength']);
-}
-
-
 DataModule.prototype.isValidRequest = function(username, sessionId) {
-    return (this.data[username] !== undefined && this.data[username]['sessionId'] === sessionId);
-}
+
+    var currTime = new Date();
+
+    if (this.data[username] !== undefined && this.data[username]['sessionId'] === sessionId &&
+        username !== undefined && sessionId !== undefined) {
+
+        if (new Date(currTime - this.data[username]['lastConn']).getMinutes() <= 30) {
+            return true;
+        }
+    }
+
+    return false;
+};
+
+DataModule.prototype.updateLastConnection = function(username) {
+    this.data[username]['lastConn'] = new Date();
+};
 
 module.exports = DataModule;
