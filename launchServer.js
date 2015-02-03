@@ -83,8 +83,8 @@ webServer.start(8888,  function(err, server) {
         res.cookie('username', 'tal');
         // end debug
 
-        itemId = req.params.id;
-        content = req.params.value;
+        itemId = req.param('id');
+        content = req.param('value');
 
         retVal = data.addToDo(username, sessionId, itemId, content);
 

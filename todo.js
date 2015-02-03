@@ -71,6 +71,15 @@ $(document).ready(function() {
         }
     });
 
+    $.ajax({
+        type: "GET",
+        url: "/item",
+        success: function (data) {
+            var content = printToConsole(data);
+            $("#mainDiv").html(content);
+        }
+    });
+
 
 
 
@@ -112,7 +121,13 @@ function printToConsole(data) {
         content += "success; msg is: ";
 
         for (var i= 0, leng = msg.length; i<leng; i++) {
-            content += '[id: ' + msg[i]['id'] + ', content: ' + msg[i]['status'] + ', status: ' + msg[i]['status'] + ']'
+            content += '[id: ' + msg[i]['id'] + ', content: \'' + msg[i]['content'] + '\', status: ';
+            if (msg[i]['status'] === 0) {
+                content += 'success]\t';
+            }
+            else {
+                content += 'failure]\t';
+            }
         }
     }
     else if (status === 1) {
