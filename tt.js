@@ -3,14 +3,10 @@
  */
 
 
+var a = 0;
 
-var a = {
-    userName : "blabla",
-    passWord : "iosi"
-}
+var b = a++;
+var b = a++;
 
-var b = JSON.stringify(a);
-console.log(b)
-var c = JSON.parse(b);
-console.log(c)
-console.log(c.length)
+console.log(b);
+console.log(a);

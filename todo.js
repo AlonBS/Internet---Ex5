@@ -5,7 +5,7 @@
 /*
     instructions to run the application:
         1. open cmd and go to C:\Users\orenstal\WebstormProjects\InternetEx5
-        2. type: node launchServer.js
+        2. t`ype: node launchServer.js
         3. open browser, and type: http://localhost:8888/index.html
  */
 
