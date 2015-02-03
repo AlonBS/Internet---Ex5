@@ -65,8 +65,6 @@ $(document).ready(function() {
     $.ajax({
         type: "GET",
         url: "/item",
-        cache: false,
-        data: {'id': 1, 'value': 'second comment'},
         success: function (data) {
             var content = printToConsole(data);
             $("#mainDiv").html(content);
@@ -110,12 +108,18 @@ function printToConsole(data) {
     var msg = data['msg'];
     var content = "status: ";
 
-    if (status === 0)
-        content += "success";
-    else if (status === 1)
-        content += "failure";
+    if (status === 0) {
+        content += "success; msg is: ";
 
-    content += "; msg is: " + msg.toString() + "\n";
+        for (var i= 0, leng = msg.length; i<leng; i++) {
+            content += '[id: ' + msg[i]['id'] + ', content: ' + msg[i]['status'] + ', status: ' + msg[i]['status'] + ']'
+        }
+    }
+    else if (status === 1) {
+        content += "failure; msg is: " + msg.toString();
+    }
+
+    content += "\n";
 
     console.log(content);
 

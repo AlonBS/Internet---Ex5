@@ -49,8 +49,9 @@ webServer.start(8888,  function(err, server) {
         // should returns the entire list
         // if relevant- the cookie should be sent to verify which user is it. if the sessionId is unknown or expired
         // you should return error 400 and show the login virtual page with some message
-        username = data.cookies.username;
-        sessionId = data.cookies.sessionId;
+
+        username = req.cookies.username;
+        sessionId = req.cookies.sessionId;
 
         // for debug use
         username = 'tal';
