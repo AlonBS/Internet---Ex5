@@ -109,9 +109,9 @@ webServer.start(8888,  function(err, server) {
         res.cookie('username', 'tal');
         // end debug
 
-        itemId = req.params.id;
-        content = req.params.value;
-        itemStatus = req.params.status;
+        itemId = req.param('id');
+        content = req.param('value');
+        itemStatus = req.param('status');
 
         retVal = data.changeTodoItem(username, sessionId, itemId,itemStatus, content);
 
@@ -136,7 +136,7 @@ webServer.start(8888,  function(err, server) {
         res.cookie('username', 'tal');
         // end debug
 
-        itemId = req.params.id;
+        itemId = req.param('id');
 
         retVal = data.deleteTodoItem(username, sessionId, itemId);
 

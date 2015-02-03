@@ -2,12 +2,13 @@
  * Created by orenstal on 03/02/2015.
  */
 
+var jquery = require('./lib/jquery-2.1.3.js');
 
 // todo maybe we should use 'const' instead of 'var' (checks ES !)
 var FAILURE_STATUS = 1;
 var SUCCESS_STATUS = 0;
-var ACTIVE_ITEM_CODE = 0;
-var COMPLETED_ITEM_CODE = 1;
+var ACTIVE_ITEM_CODE = '0';
+var COMPLETED_ITEM_CODE = '1';
 var USERNAME_IN_USED = 'This username in used';
 var UNAUTHORIZED_USER = 'Unauthorized user';
 var INVALID_ITEM_ID = 'invalid itemId';
@@ -38,11 +39,14 @@ DataModule.prototype.addUser = function(username, password, sessionId, fullName)
 DataModule.prototype.addToDo = function(username, sessionId, itemId, content) {
     if (this.isValidRequest(username, sessionId)) {
 
-        // todo: i need to verify that itemId does not exist !!
-
-        this.data[username]['todoList'].push({'id': itemId, 'content': content, 'status': ACTIVE_ITEM_CODE});
-        this.updateLastConnection(username);
-        return {'status': SUCCESS_STATUS, 'msg': ''};
+        if (this.getListIndex(username, itemId) === -1) {
+            this.data[username]['todoList'].push({'id': itemId, 'content': content, 'status': ACTIVE_ITEM_CODE});
+            this.updateLastConnection(username);
+            return {'status': SUCCESS_STATUS, 'msg': ''};
+        }
+        else {
+            return {'status': FAILURE_STATUS, 'msg': INVALID_ITEM_ID};
+        }
     }
 
     return {'status': FAILURE_STATUS, 'msg': UNAUTHORIZED_USER};
@@ -89,15 +93,16 @@ DataModule.prototype.deleteTodoItem = function(username, sessionId, itemId) {
     var index;
 
     if (this.isValidRequest(username, sessionId)) {
-        if (itemId === -1) {
+        if (itemId === '-1') {
             this.deleteAllCompleted(username);
+            this.updateLastConnection(username);
             return {'status': SUCCESS_STATUS, 'msg': ''};
         }
 
         index = this.getListIndex(username, itemId);
 
         if (index !== -1) {
-            this.data[username]['todoList'].slice(index, 1);
+            this.data[username]['todoList'].splice(index, 1);
             this.updateLastConnection(username);
             return {'status': SUCCESS_STATUS, 'msg': ''};
         }
@@ -129,9 +134,9 @@ DataModule.prototype.deleteAllCompleted = function(username) {
     var listArray = this.data[username]['todoList'];
     var len = listArray.length;
 
-    for (i=0; i<len; i++) {
+    for (i=listArray.length-1; i>=0 ;i--) {
         if (listArray[i]['status'] === COMPLETED_ITEM_CODE) {
-            this.data[username]['todoList'].slice(i, 1);
+            this.data[username]['todoList'].splice(i, 1);
         }
     }
 };
