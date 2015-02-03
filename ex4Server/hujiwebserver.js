@@ -41,16 +41,16 @@ exports.static = function (rootFolder) {
 
     shortServerStaticRootFolder = rootFolder;
 
-    try {
-        serverStaticRootFolder = getFullPath(rootFolder, false);
-
-        // verify that the received root folder  exists
-        if (!fs.existsSync(serverStaticRootFolder)) {
-            writeLog("hujiwebserver", "static", "invalid root folder", true);
-
-            return;
-        }
-    } catch (e) {}
+    //try {
+    //    serverStaticRootFolder = getFullPath(rootFolder, false);
+    //
+    //    // verify that the received root folder  exists
+    //    if (!fs.existsSync(serverStaticRootFolder)) {
+    //        writeLog("hujiwebserver", "static", "invalid root folder", true);
+    //
+    //        //return;
+    //    }
+    //} catch (e) {}
 
     return staticResourceHandler;
 };
@@ -68,7 +68,6 @@ var staticResourceHandler = function (request, response, next) {
         return;
     }
 
-
     fs.stat(fullPath, function (err, stats) {
 
         if (err || !stats.isFile()) {
@@ -78,21 +77,19 @@ var staticResourceHandler = function (request, response, next) {
             return;
         }
 
-        fs.readFile(fullPath, 'utf8', function (err, data) {
+        fs.readFile(fullPath, function (err, data) {
 
             if (err) {
                 response.status(404).send();
             }
 
             var closeConnection = response.shouldCloseConnection;
+            var type = server.identifyType(request.path);
 
             // send header part
-            response.set("content-type", server.identifyType(request.path));
+            response.set("content-type", type);
             response.set("content-length", stats.size);
             response.send(data);
-
-            if (closeConnection)
-                request.clientSocket.end();
 
         });
     })

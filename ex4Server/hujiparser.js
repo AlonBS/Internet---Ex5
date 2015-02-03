@@ -29,7 +29,7 @@ exports.parse = function (dataAsString) {
     var requestLineRegex = /^[\s]*([\w]+)[\s]+(([^\s]+?)[\s]+|([^\s]*?))([\w]+\/[0-9\.]+)[\s]*$/g;
     var requestLineMatch = requestLineRegex.exec(lines[i++]);
 
-    var method, path, host, query = {}, version, protocol, header = {}, body, leftData, cookies = {};
+    var method, path, host, query = {}, version, protocol, header = {}, body, bodyParams = {}, leftData, cookies = {};
 
     // parse the request line
     if (requestLineMatch != null) {
@@ -37,21 +37,37 @@ exports.parse = function (dataAsString) {
 
         requestLineMatch[2] = pathModule.normalize(requestLineMatch[2].toLowerCase().trim());
 
-        var uriRegex = '^[^\\\\\\.]*([\\\\][\\\\])?[^\\\\]*([\\\\][^\\?#]*)(\\?|#)?(.*)';
+        var startIndex = 0;
+        var len = requestLineMatch[2].length;
+
+        if (requestLineMatch[2].indexOf("\\\\") === 0) {
+            startIndex = 1;
+            len -= 1;
+        }
+        if (requestLineMatch[2].lastIndexOf("\\") === requestLineMatch[2].length-1) {
+            len -= 1;
+        }
+
+        requestLineMatch[2] = requestLineMatch[2].substr(startIndex, len);
+
+
+
+
+        var uriRegex = '^[^\\\\\\.]*([\\\\][\\\\])?[^\\\\]*([\\\\][^\\?]*)(\\?)?(.*)';
         var matches = requestLineMatch[2].match(uriRegex);
 
         path = matches[2];
         if (matches[3] === '?') {
-            query = fillQueryParams(matches[4])
+            query = fillParams(matches[4])
         }
 
         version = requestLineMatch[5].toUpperCase();
 
         if (version.indexOf("HTTP\/") == 0) {
-            protocol = "HTTP";
+            protocol = "http";
         }
         else if (version.indexOf("HTTPS\/") == 0) {
-            protocol = "HTTPS";
+            protocol = "https";
         }
 
     }
@@ -97,6 +113,12 @@ exports.parse = function (dataAsString) {
         }
 
         body = temp.substr(0, parseInt(header["content-length"]));
+
+        if (!isJsonString(body)) { // i.e, its in 'a=b&c=d' format
+            bodyParams = fillParams(body);
+
+        }
+
         leftData = temp.substr(parseInt(header["content-length"]));
     }
 
@@ -104,10 +126,22 @@ exports.parse = function (dataAsString) {
         cookies = querystring.parse(header['cookie'], /\s*;\s*/);
     }
 
-    return new httpRequestModule(method, version, header, body, leftData, query, cookies, path, host, protocol);
+    return new httpRequestModule(method, version, header, body, bodyParams, leftData, query, cookies, path, host, protocol);
 };
 
-function fillQueryParams(queryParams) {
+
+function isJsonString(str) {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
+
+
+
+function fillParams(queryParams) {
     var query = {};
     var splittedQueryParams = queryParams.split("&");
 
@@ -117,6 +151,10 @@ function fillQueryParams(queryParams) {
         if (equalIndex != -1) {
             var key = splittedQueryParams[i].substr(0, equalIndex);
             var val = splittedQueryParams[i].substr(equalIndex + 1);
+
+            // replace '+' with ' '
+            val = val.replace(/\+/g, ' ');
+
             addToQuery(key, val, query);
         }
     }
@@ -150,12 +188,21 @@ exports.stringify = function(httpResponse) {
         reasonPharseContent[httpResponse.statusCode] + "\r\n";
 
     for (var headerKey in httpResponse.header) {
-        httpResponseAsString += headerKey + ": " + httpResponse.header[headerKey] + "\r\n";
+        if (httpResponse.header[headerKey] instanceof Array) {
+            for (var v in httpResponse.header[headerKey]) {
+                httpResponseAsString += headerKey + ": " + httpResponse.header[headerKey][v] + "\r\n";
+            }
+        }
+        else {
+            httpResponseAsString += headerKey + ": " + httpResponse.header[headerKey] + "\r\n";
+        }
+
     }
 
     httpResponseAsString += "\r\n";
-    if (httpResponse.body !== null)
+    if (httpResponse.body !== null && (!Buffer.isBuffer(httpResponse.body))) {
         httpResponseAsString += httpResponse.body;
+    }
 
     return httpResponseAsString;
 };

@@ -10,9 +10,10 @@ var errBody = {
     404 : "Error 404: Not Found",
     413 : "Error 413: Request Entity Too Large",
     414 : "Error 414: Request-URI Too Large",
+    500 : "Error 500: Internal Server Error",
     505 : "Error 505: HTTP Version not supported",
 
-    def:  "Error 500: Undefined Error"
+    def:  "Error 500: Internal Server Error"
 
 };
 
@@ -28,6 +29,7 @@ function HttpResponse(clientSocket) {
     this.clientSocket = clientSocket;
 
     this.shouldCloseConnection = false;
+    this.isSent = false;
 
     return this;
 };
@@ -52,11 +54,11 @@ HttpResponse.prototype.closeConnection = function closeConnection(shouldClose) {
 HttpResponse.prototype.set = function(field, value) {
 
     if (value !== undefined) {
-        this.header[field] = value;
+        this.header[field.toLowerCase()] = value;
     }
     else {
         for (var val in field ) {
-            this.header[val] = field[val];
+            this.header[val.toLowerCase()] = field[val];
         }
     }
 
@@ -67,7 +69,7 @@ HttpResponse.prototype.set = function(field, value) {
 
 HttpResponse.prototype.get = function(attr) {
 
-    return this.header[attr]
+    return this.header[attr.toLowerCase()]
 };
 
 
@@ -76,7 +78,7 @@ HttpResponse.prototype.cookie = function (name, value, options) {
     options = options ? options : {};
     var chValue;
     if (typeof value === 'object') {
-        value = 'j:' + JSON.stringify(value);
+        value = JSON.stringify(value);
     }
 
     chValue =  [name + '=' + value];
@@ -91,22 +93,25 @@ HttpResponse.prototype.cookie = function (name, value, options) {
         chValue.push('path=' + options.path);
     }
 
-    if (options.secure) chValue.push('secure=true');
+    if (options.secure) chValue.push('secure');
 
     if (options.expires) chValue.push('expires=' + options.expires.toUTCString());
 
     if (options.maxAge) {
 
         options.expires = new Date(Date.now() + options.maxAge);
-        options.maxAge /= 1000; // in seconds
         chValue.push('max-age=' + options.maxAge);
     }
 
-    if (options.httpOnly) chValue.push('httponly=true');
+    if (options.httpOnly) chValue.push('httponly');
+
     // according to forum we should not support signed-cookie
 
     chValue = chValue.join('; ');
-    this.set('set-cookie', chValue);
+    if (this.header['set-cookie'] === undefined) {
+        this.header['set-cookie'] = [];
+    }
+    this.header['set-cookie'].push(chValue);
 
     return this;
 };
@@ -114,7 +119,7 @@ HttpResponse.prototype.cookie = function (name, value, options) {
 
 HttpResponse.prototype.send = function(body) {
 
-    if (this.statusCode !== 200) {
+    if (this.statusCode !== 200 && (body === undefined || body === null)) {
         body = errBody[this.statusCode];
     }
 
@@ -124,6 +129,7 @@ HttpResponse.prototype.send = function(body) {
             if (this.get('content-type') === undefined) {
                 this.set('content-type', 'text/html');
             }
+
             this.set('content-length', body.length);
             this.body = body;
             break;
@@ -134,7 +140,7 @@ HttpResponse.prototype.send = function(body) {
                     this.set('content-type', 'application/octet-stream');
                 }
 
-                this.body = body.toString();
+                this.body = body; //.toString();
                 this.set('content-length', body.length);
             }
             else {
@@ -148,12 +154,19 @@ HttpResponse.prototype.send = function(body) {
     }
 
     var msg = this.parser.stringify(this);
-    this.clientSocket.write(msg, function() {
-        if (this.shouldCloseConnection) {
-            this.clientSocket.end();
-        }
-    });
+    var socket = this.clientSocket;
+    var closeConnection = this.shouldCloseConnection;
+    socket.write(msg);
+    if (body !== null && body !== undefined && Buffer.isBuffer(body)) { // If it is not, than it is already embedded in msg
+        socket.write(body, function() {
+            if (closeConnection) {
+                socket.end();
+            }
+        });
+    }
 
+    this.isSent = true;
+    this.set("content-type", undefined);
     return this;
 };
 
@@ -162,6 +175,8 @@ HttpResponse.prototype.json = function(body) {
 
     var msg = JSON.stringify(body);
     this.set('content-type', 'application/json');
+
+    this.isSent = true;
 
     return this.send(msg);
 };

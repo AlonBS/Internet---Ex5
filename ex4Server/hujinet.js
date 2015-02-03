@@ -5,15 +5,20 @@
 exports.createServer = function(port, onRequestArrival, callBackFunc) {
 
     var net = require('net');
+    var httpResponseModule = require('./HttpResponse');
+
     var server = net.createServer(function(socket) { //'connection' listener
 
         socket.buffer = "";
+
+        var response = new httpResponseModule(socket);
+
         socket.on('data', function(data) {
             this.buffer += data;
-            onRequestArrival(this.buffer.toString(), socket);
+            onRequestArrival(this.buffer.toString(), socket, response);
         });
 
-        socket.on('end', function() {/*do nothing */});
+        socket.on('end', function() { /* Do nothing */ });
 
         socket.on('uncaughtException', function(err) {
 
@@ -36,7 +41,12 @@ exports.createServer = function(port, onRequestArrival, callBackFunc) {
         });
 
 
-        socket.setTimeout(2000, function() {
+        socket.setTimeout(10000, function() {   // TODO: should be 2000 !!
+
+            if (response.isSent == false) {
+                response.status(404).send();
+            }
+
             socket.end();
         });
     });
