@@ -86,7 +86,7 @@ function runServerTests() {
         type: "POST",
         url: "/item",
         cache: false,
-        data: {'id': 0, 'value': 'first comment'},
+        data: {id: 0, value: 'first comment'},
         success: function (data) {
             var content = printToConsole(data);
             $("#mainDiv").html(content);
@@ -97,7 +97,7 @@ function runServerTests() {
         type: "POST",
         url: "/item",
         cache: false,
-        data: {'id': 1, 'value': 'second comment'},
+        data: {id: 1, value: 'second comment'},
         success: function (data) {
             var content = printToConsole(data);
             $("#mainDiv").html(content);

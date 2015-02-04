@@ -129,7 +129,7 @@ webServer.start(8888,  function(err, server) {
 
         sessionId = req.cookies.sessionId;
 
-        // for debug use
+        // todo for debug use
         username = 'tal';
         sessionId = '0';
         res.cookie('sessionId', '0');

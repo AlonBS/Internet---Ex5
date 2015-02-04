@@ -114,14 +114,64 @@ function setChangeStatus() {
 
 
 function setEditContent() {
+    var todoElement, currContent;
 
     // update content of item
-    $(".item_content").unbind().dblclick(function() {
+    $(".item_content").unbind().dblclick(function (e) {
 
-        console.log("IMPLEMENT ME MADAFACKS")
+        var tr = $(this).parent();
+        var itemId = tr.attr('id').substring(tr.attr('id').indexOf('-') + 1);
 
-        //TODO implement
+        e.stopPropagation();    // todo relevant ??
+        todoElement = $(this);
+        currContent = $(this).html();
+
+        $(todoElement).html('<input class="todoUpdateContent" type="text" value="' + currContent + '" />');
+
+        // move the cursor to the last char
+        var len= $(".todoUpdateContent").val().length * 2;
+        $(".todoUpdateContent").focus();
+        $(".todoUpdateContent")[0].setSelectionRange(len, len);
+
+
+        $(".todoUpdateContent").focusout(function() {
+            updateTodoContent(itemId);
+        });
+
+        $(".todoUpdateContent").dblclick(function() {
+            updateTodoContent(itemId);
+        });
+
+        $(".todoUpdateContent").keyup(function (event) {
+            if (event.keyCode == 13) {
+                updateTodoContent(itemId);
+            }
+        });
     });
+}
+
+function updateTodoContent(itemId) {
+
+    var $this = $(".todoUpdateContent");
+
+    $.ajax({
+        type: "PUT",
+        url: "/item",
+        data: {id: itemId, value: $this.val(), status: itemsStatus[itemId] },
+        success: function (data)
+        {
+            if (data['status'] === 0 ) { // only upon success we change status of item
+                $this.parent().text($this.val());
+                $this.remove();
+            }
+            else {
+                console.log("Unable to update item with id: " + itemId + ". Reason: " + data['msg']);
+                alert("Unable to update item with id: " + itemId + ". Reason: " + data['msg']); //TODO - prompt in a more friendly way
+            }
+        }
+    });
+
+
 }
 
 
