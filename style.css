@@ -1,0 +1,89 @@
+/******************************General properties**********************************/
+
+body{
+
+}
+
+#main_div {
+
+    width:350px;
+    margin: auto;
+    /*text-align:center;*/
+    padding: 25px
+}
+
+
+input {
+
+    width: 350px;
+
+}
+
+
+#items_div {
+
+    display: none;
+
+
+    /*border:1px double black;*/
+    /*width:250px;*/
+    /*margin: auto;*/
+
+}
+
+
+#items_table {
+    border-collapse: collapse;
+    border-color: #4d4d4d;
+    table-layout: fixed;
+
+    background-color: #d9d9d9;
+
+}
+
+#items_table tr {
+    height:50px;
+}
+
+#items_table td {
+    padding: 10px;
+    overflow: hidden;
+}
+
+#items_table td:nth-child(1) {
+    max-width: 20px;
+    width: 20px;
+}
+#items_table td:nth-child(2) {
+    max-width: 200px;
+    width: 200px;
+}
+#items_table td:nth-child(3) {
+    max-width: 30px;
+    width: 30px;
+}
+
+.delete_icon {
+    height: 24px;
+    width: 24px;
+    background-image: url("delete_icon_good_2.png");
+    background-color:inherit;
+    opacity: 0.4;
+    display: none
+}
+
+
+
+#items_left{
+
+    float: left;
+}
+
+#clear_completed{
+
+    display: none;
+    float: right;
+}
+
+
+/****************************Log-in screen properties******************************/

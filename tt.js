@@ -3,10 +3,9 @@
  */
 
 
-var a = 0;
+var a = '1';
+var b = 0;
+var c = (b++).toString();
 
-var b = a++;
-var b = a++;
-
+console.log(c === '0');
 console.log(b);
-console.log(a);

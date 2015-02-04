@@ -60,7 +60,7 @@ webServer.start(8888,  function(err, server) {
         res.cookie('username', 'tal');
         // end debug
 
-        retVal = data.getAllTodoList(username, sessionId);
+        retVal = data.getAllTodoList(username, sessionId); // {
 
         sendResponse(retVal, res);
     });
