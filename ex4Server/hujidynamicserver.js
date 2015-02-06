@@ -166,6 +166,9 @@ var identifyType = function (uri) {
         case "gif":
             return "image/gif";
 
+        case "png":
+            return "image/png";
+
         default:
             return "text/html";
     }

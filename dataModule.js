@@ -79,6 +79,16 @@ DataModule.prototype.changeTodoItem = function(username, sessionId, itemId, newS
 
             return {'status': SUCCESS_STATUS, 'msg': ''};
         }
+        else if (newStatus !== undefined) {  //change status to all items
+            var len = this.data[username]['todoList'].length;
+            var i;
+
+            for (i=0; i<len; i++) {
+                this.data[username]['todoList'][i]['status'] = newStatus;
+            }
+
+            return {'status': SUCCESS_STATUS, 'msg': ''};
+        }
 
         return {'status': FAILURE_STATUS, 'msg': INVALID_ITEM_ID};
     }
@@ -119,6 +129,9 @@ DataModule.prototype.getListIndex = function(username, itemId) {
     var listArray = this.data[username]['todoList'];
     var len = listArray.length;
 
+    if (itemId === -1)
+        return -1;
+
     for (i=0; i<len; i++) {
         if (listArray[i]['id'] === itemId) {
             return i;
@@ -146,7 +159,17 @@ DataModule.prototype.getAllTodoList = function(username, sessionId) {
 
     if (this.isValidRequest(username, sessionId)) {
         this.updateLastConnection(username);
-        return {'status': SUCCESS_STATUS, 'msg': this.data[username]['todoList']};
+
+        var lastCellIndex = this.data[username]['todoList'].length-1;
+        var nextValidId;
+
+        if (lastCellIndex === -1)
+            nextValidId = 0;
+        else
+            nextValidId = this.data[username]['todoList'][lastCellIndex]['id']+1;
+
+        return {'status': SUCCESS_STATUS,
+            'msg': {'list': this.data[username]['todoList'], 'nextId': nextValidId}};
     }
 
     return {'status': FAILURE_STATUS, 'msg': UNAUTHORIZED_USER};
