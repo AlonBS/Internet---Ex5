@@ -2,6 +2,12 @@
  * Client Side.js - created By Alon Ben-Shimol & Tal Orenstein
  */
 
+/*
+    todo:
+        1. @
+        2. list
+ */
+
 function newItemListener()
 {
     var inputField = $("#add_new_item");
@@ -33,13 +39,14 @@ function appendNewItem(id, status, content) {
     var mark = "";
     var itemsStr;
 
-    (status === 1) ? (++completedItems, mark = "\tC\t") : (++uncompletedItems, mark = "\tU\t")
+    (status === 1) ? (++completedItems) : (++uncompletedItems)
 
     itemsStatus[id] = status;
 
+    // ★
     $("#items_table tbody").append(
         "<tr id=tr-" + id + ">" +
-        "<td class='item_status'>" + mark + "</td>" +
+        "<td class='item_status'>&rArr;</td>" +
         "<td class='item_content'>" + content + "</td>" +
         "<td><button class='delete_icon'/></td>" +
         "</tr>");
@@ -58,10 +65,16 @@ function appendNewItem(id, status, content) {
         }
     );
 
+    if (status === 1) {
+        $("#tr-"+id).children("td:nth-child(1)").toggleClass("item_completed_sign");
+        $("#tr-"+id).children("td:nth-child(2)").toggleClass("item_completed_content");
+    }
+
     //$("#change_all_statuses").checked = false;
     $('#change_all_statuses').prop('checked',false);
     $("#change_all_statuses").show();
-    $("#items_left").show();
+    //$("#items_left").show();
+    $("#items_track").show();
 
     if (uncompletedItems === 1) {
         itemsStr = 'item left.';
@@ -101,7 +114,10 @@ function setChangeStatus() {
             {
                 if (data['status'] === 0 ) { // only upon success we change status of item
 
-                    tr.children("td:nth-child(1)").text(newItemStatus === 0 ? '\tU\t' : '\tC\t'); // TODO - edit
+                    //tr.children("td:nth-child(1)").text(newItemStatus === 0 ? '\tU\t' : '\tC\t'); // TODO - edit
+                    tr.children("td:nth-child(1)").toggleClass("item_completed_sign");
+                    tr.children("td:nth-child(2)").toggleClass("item_completed_content");
+
                     newItemStatus === 1 ? (++completedItems , --uncompletedItems) : (--completedItems , ++uncompletedItems);
 
                     if (completedItems > 0 && uncompletedItems === 0) { // all the items were completed
@@ -167,13 +183,17 @@ function setChangeAllStatusesListener() {
                             itemsStatus[trId] = 0;
                             --completedItems;
                             ++uncompletedItems;
-                            currentRow.children("td:nth-child(1)").text('\tU\t');
+                            //currentRow.children("td:nth-child(1)").text('\tU\t');
+                            currentRow.children("td:nth-child(1)").toggleClass("item_completed_sign");
+                            currentRow.children("td:nth-child(2)").toggleClass("item_completed_content");
                         }
                         else if (itemsStatus[trId] === 0) {
                             itemsStatus[trId] = 1;
                             ++completedItems;
                             --uncompletedItems;
-                            currentRow.children("td:nth-child(1)").text('\tC\t');
+                            //currentRow.children("td:nth-child(1)").text('\tC\t');
+                            currentRow.children("td:nth-child(1)").toggleClass("item_completed_sign");
+                            currentRow.children("td:nth-child(2)").toggleClass("item_completed_content");
                         }
                     });
 
@@ -435,7 +455,8 @@ function setClearCompletedListener() {
 
                     if (uncompletedItems === 0) {
                         $("#change_all_statuses").hide();
-                        $("#items_left").hide();
+                        //$("#items_left").hide();
+                        $("#items_track").hide();
                     }
 
 
