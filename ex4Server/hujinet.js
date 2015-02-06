@@ -10,6 +10,7 @@ exports.createServer = function(port, onRequestArrival, callBackFunc) {
     var server = net.createServer(function(socket) { //'connection' listener
 
         socket.buffer = "";
+        //socket.removeAllListeners('data');
 
         var response = new httpResponseModule(socket);
 
