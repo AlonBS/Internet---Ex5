@@ -34,16 +34,6 @@ webServer.start(8888,  function(err, server) {
     //    }
     //});
 
-    server.get('/test', function(req, res, next){
-
-        if (req.cookies.fname === "tal") {
-            res.json({'content':"Hi Tal.<br> Welcome back !!"});
-        }
-        else {
-            res.cookie('fname', 'tal').cookie('lname', 'orenstein').json({'content': "Hi!<br>This is your first time !!"});
-        }
-        //next();
-    });
 
     server.get('/item', function(req, res, next) {
         // should returns the entire list

@@ -4,9 +4,18 @@
 
 /*
     todo:
-        1. @
-        2. list
+        1.
  */
+
+
+// global variables
+var nextId;
+var uncompletedItems;
+var completedItems;
+var itemsStatus;
+
+
+
 
 function newItemListener()
 {
@@ -21,16 +30,17 @@ function newItemListener()
         success: function (data)
         {
             if (data['status'] === 0 ) { // only upon success we display new item
+
                 appendNewItem(itemId, 0, content); // new item is always uncompleted by default
                 inputField.val('');
             }
             else {
                 console.log("Unable to add item with id: " + itemId + ", with content: " + content);
-                alert("Failed to add new item") //TODO - prompt in a more friendly way
+                alert("Failed to add new item"); //TODO - prompt in a more friendly way
             }
         }
     });
-};
+}
 
 
 
@@ -39,7 +49,7 @@ function appendNewItem(id, status, content) {
     var mark = "";
     var itemsStr;
 
-    (status === 1) ? (++completedItems) : (++uncompletedItems)
+    (status === 1) ? (++completedItems) : (++uncompletedItems);
 
     itemsStatus[id] = status;
 
@@ -104,7 +114,7 @@ function setChangeStatus() {
         var tr = $(this).parent();
         var itemId = tr.attr('id').substring(tr.attr('id').indexOf('-') + 1);
         var newItemStatus = (1 - itemsStatus[itemId]);
-        itemsStatus[itemId] = newItemStatus;    // todo i think that it supposed to be inside the 'success'..
+        //itemsStatus[itemId] = newItemStatus;    // todo i think that it supposed to be inside the 'success'..
 
         $.ajax({
             type: "PUT",
@@ -113,8 +123,10 @@ function setChangeStatus() {
             success: function (data)
             {
                 if (data['status'] === 0 ) { // only upon success we change status of item
+                    var itemsStr;
 
-                    //tr.children("td:nth-child(1)").text(newItemStatus === 0 ? '\tU\t' : '\tC\t'); // TODO - edit
+                    itemsStatus[itemId] = newItemStatus;
+
                     tr.children("td:nth-child(1)").toggleClass("item_completed_sign");
                     tr.children("td:nth-child(2)").toggleClass("item_completed_content");
 
@@ -139,7 +151,7 @@ function setChangeStatus() {
                         }
                     }
 
-                    var itemsStr = (uncompletedItems === 1) ? 'item left.' : 'items left.';
+                    itemsStr = (uncompletedItems === 1) ? 'item left.' : 'items left.';
                     $("#items_left").html("<strong> " + uncompletedItems + " </strong>" + itemsStr);
 
                 }
@@ -173,6 +185,8 @@ function setChangeAllStatusesListener() {
             data: {id: -1, value: undefined, status: newStatus },
             success: function (data)
             {
+                var itemsStr;
+
                 if (data['status'] === 0 ) { // only upon success we change status of item
 
                     $('#items_table > tbody  > tr').each(function() {
@@ -209,7 +223,7 @@ function setChangeAllStatusesListener() {
                         $('#change_all_statuses').prop('checked',false);
                     }
 
-                    var itemsStr = (uncompletedItems === 1) ? 'item left.' : 'items left.';
+                    itemsStr = (uncompletedItems === 1) ? 'item left.' : 'items left.';
                     $("#items_left").html("<strong> " + uncompletedItems + " </strong>" + itemsStr);
 
                 }
@@ -231,6 +245,7 @@ function setEditContent() {
 
         var tr = $(this).parent();
         var itemId = tr.attr('id').substring(tr.attr('id').indexOf('-') + 1);
+        var len;
 
         e.stopPropagation();    // todo relevant ??
         todoElement = $(this);
@@ -239,7 +254,7 @@ function setEditContent() {
         $(todoElement).html('<input class="todoUpdateContent" type="text" value="' + currContent + '" />');
 
         // move the cursor to the last char
-        var len= $(".todoUpdateContent").val().length * 2;
+        len= $(".todoUpdateContent").val().length * 2;
         $(".todoUpdateContent").focus();
         $(".todoUpdateContent")[0].setSelectionRange(len, len);
 
@@ -290,7 +305,7 @@ function setDeleteImage() {
     // delete item
     $(".delete_icon").unbind().on("click", function(e) { // we don't delete only until approved by server
 
-        e.preventDefault();
+        e.preventDefault(); // todo if relevant, move after var declarations
 
         var tr = $(this).parent().parent();
         var itemId = tr.attr('id').substring(tr.attr('id').indexOf('-') + 1);
@@ -302,6 +317,8 @@ function setDeleteImage() {
             data: {id: itemId},
             success: function (data)
             {
+                var itemsStr;
+
                 if (data['status'] === 0 ) { // only upon success we delete this row
                     tr.remove();
                     (itemStatus === 1) ? --completedItems : --uncompletedItems;
@@ -325,7 +342,7 @@ function setDeleteImage() {
                         }
                     }
 
-                    var itemsStr = (uncompletedItems === 1) ? 'item left.' : 'items left.';
+                    itemsStr = (uncompletedItems === 1) ? 'item left.' : 'items left.';
                     $("#items_left").html("<strong> " + uncompletedItems + " </strong>" + itemsStr);
 
                     if (completedItems + uncompletedItems === 0) {
@@ -361,10 +378,28 @@ function setInputEventListener() {
 
     //bind input form
     $("#add_new_item").bind("keypress", function(e) {
-        if (!e) e = window.event;
-        var keyCode = e.keyCode || e.which;
+        var keyCode;
+        // todo maybe i can move out the line $("#add_new_item").val().length to var
 
-        if (keyCode == '13') newItemListener();
+        if (!e) e = window.event;
+
+        keyCode = e.keyCode || e.which;
+
+        //if (keyCode == '13') newItemListener();
+        // verify that not only 'enter' is pressed
+        if (keyCode === 13 && $("#add_new_item").val().length >= 1) newItemListener();
+    });
+
+    //$("#add_new_item").bind("click", function(e) {
+    //
+    //    // verify that not only 'enter' is pressed
+    //    if ($("#add_new_item").val().length > 1) newItemListener();
+    //});
+
+    $("#add_new_item").focus();
+
+    $("#add_new_item").focusout(function() {
+        if ($("#add_new_item").val().length >= 1) newItemListener();
     });
 }
 
@@ -373,6 +408,8 @@ function loadItems() {
 
     //request all items
     $.get("/item", function(data) { // TODO - if filters are added - this should become a method
+
+        var items, numOfItems, id, status, content ;
 
         if (data['status'] === 1) {
 
@@ -384,21 +421,19 @@ function loadItems() {
 
         $("#change_all_statuses_checkbox").append("<input id='change_all_statuses' type='checkbox'>");
 
-        var items = data['msg']['list'];
+        items = data['msg']['list'];
 
         nextId = data['msg']['nextId']; //If we now loaded n tasks from server, we want id assign to start with n+1
 
-        var numOfItems = items.length;
-
-        //if (numOfItems === 0) {
-        //    $("#change_all_statuses_checkbox").html("<input id='change_all_statuses' type='checkbox'>");
-        //}
+        numOfItems = items.length;
 
         for (var i = 0 ; i < numOfItems; ++i) {
 
-            var id = items[i]['id'];
-            var status = items[i]['status'];
-            var content = items[i]['content'];
+            id = items[i]['id'];
+            status = items[i]['status'];
+            content = decodeURIComponent(items[i]['content']);
+            //console.log("reg: " + content);
+            //console.log("decoded: " + decodeURIComponent(items[i]['content']));
 
             appendNewItem(id, parseInt(status), content);
         }
@@ -436,12 +471,14 @@ function setClearCompletedListener() {
             data: {id: -1},
             success: function (data)
             {
+                var currentRow, trId;
+
                 if (data['status'] === 0 ) { // only upon success we delete all rows
 
                     $('#items_table > tbody  > tr').each(function() {
 
-                        var currentRow = $(this); // cache this constructor
-                        var trId = $(currentRow).attr('id').substring($(currentRow).attr('id').indexOf('-') + 1);
+                        currentRow = $(this); // cache this constructor
+                        trId = $(currentRow).attr('id').substring($(currentRow).attr('id').indexOf('-') + 1);
                         if (itemsStatus[trId]) {
                             --completedItems;
                             $(this).remove();

@@ -42,13 +42,14 @@ exports.createServer = function(port, onRequestArrival, callBackFunc) {
         });
 
 
-        socket.setTimeout(10000, function() {   // TODO: should be 2000 !!
+        socket.setTimeout(2000, function() {   // TODO: should be 2000 !!
 
             if (response.isSent == false) {
                 response.status(404).send();
             }
 
             socket.end();
+            socket.destroy();
         });
     });
 
