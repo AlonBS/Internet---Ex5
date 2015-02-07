@@ -14,24 +14,26 @@
     <div id="main_div">
         <h1>todos</h1>
 
-        <input id="add_new_item" placeholder="What needs to be done" autofocus="true">
-        <span id="change_all_statuses_checkbox"></span>
-        <!--<input id="change_all_statuses" type="checkbox"><input id="add_new_item" placeholder="What needs to be done" autofocus="true"> -->
+        <div id="errorMsg">&nbsp;</div>
+
+        <div id="main_items_div">
+            <input id="add_new_item" placeholder="What needs to be done" autofocus="true">
+            <span id="change_all_statuses_checkbox"></span>
 
 
+            <div id="items_div">
 
-        <div id="items_div">
-
-            <table id="items_table">
-                <tbody>
-                </tbody>
-            </table>
+                <table id="items_table">
+                    <tbody>
+                    </tbody>
+                </table>
 
 
-            <div id="items_track">
-                <span id="items_left"></span>
-                <button id="clear_completed"></button>
+                <div id="items_track">
+                    <span id="items_left"></span>
+                    <button id="clear_completed"></button>
 
+                </div>
             </div>
         </div>
     </div>

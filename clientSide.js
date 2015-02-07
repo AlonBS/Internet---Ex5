@@ -2,10 +2,6 @@
  * Client Side.js - created By Alon Ben-Shimol & Tal Orenstein
  */
 
-/*
-    todo:
-        1.
- */
 
 
 // global variables
@@ -36,7 +32,7 @@ function newItemListener()
             }
             else {
                 console.log("Unable to add item with id: " + itemId + ", with content: " + content);
-                alert("Failed to add new item"); //TODO - prompt in a more friendly way
+                $("#errorMsg").text("Failed to add new item");
             }
         }
     });
@@ -80,20 +76,12 @@ function appendNewItem(id, status, content) {
         $("#tr-"+id).children("td:nth-child(2)").toggleClass("item_completed_content");
     }
 
-    //$("#change_all_statuses").checked = false;
     $('#change_all_statuses').prop('checked',false);
     $("#change_all_statuses").show();
-    //$("#items_left").show();
     $("#items_track").show();
 
-    if (uncompletedItems === 1) {
-        itemsStr = 'item left.';
-    }
-    else {
-        itemsStr = 'items left.';
-    }
 
-    //itemsStr = (uncompletedItems === 1) ? 'item left.' : 'items left.';
+    itemsStr = (uncompletedItems === 1) ? 'item left.' : 'items left.';
     $("#items_left").html("<strong> " + uncompletedItems + " </strong>" + itemsStr);
     $("#items_div").show(200);
 
@@ -125,6 +113,8 @@ function setChangeStatus() {
                 if (data['status'] === 0 ) { // only upon success we change status of item
                     var itemsStr;
 
+                    $("#errorMsg").html("&nbsp;");
+
                     itemsStatus[itemId] = newItemStatus;
 
                     tr.children("td:nth-child(1)").toggleClass("item_completed_sign");
@@ -133,13 +123,11 @@ function setChangeStatus() {
                     newItemStatus === 1 ? (++completedItems , --uncompletedItems) : (--completedItems , ++uncompletedItems);
 
                     if (completedItems > 0 && uncompletedItems === 0) { // all the items were completed
-                        //$("#change_all_statuses").checked = true;
                         $('#change_all_statuses').prop('checked',true);
                         $("#clear_completed").html("Clear completed.");
                         $("#clear_completed").show();
                     }
                     else {
-                        //$("#change_all_statuses").checked = false;
                         $('#change_all_statuses').prop('checked',false);
 
                         if (completedItems > 0) {
@@ -153,11 +141,10 @@ function setChangeStatus() {
 
                     itemsStr = (uncompletedItems === 1) ? 'item left.' : 'items left.';
                     $("#items_left").html("<strong> " + uncompletedItems + " </strong>" + itemsStr);
-
                 }
                 else {
                     console.log("Unable to update item with id: " + itemId + ". Reason: " + data['msg']);
-                    alert("Unable to update item with id: " + itemId + ". Reason: " + data['msg']); //TODO - prompt in a more friendly way
+                    $("#errorMsg").text("Failed to change item status: " + data['msg']);
                 }
             }
         });
@@ -169,7 +156,6 @@ function setChangeStatus() {
 function setChangeAllStatusesListener() {
 
     // update status of item
-    //$("#change_all_statuses").unbind().click(function() {
     $("#change_all_statuses_checkbox").on('click', "#change_all_statuses", (function() {
 
         var everyoneAlreadyCompleted = (completedItems > 0 && uncompletedItems === 0);
@@ -189,6 +175,8 @@ function setChangeAllStatusesListener() {
 
                 if (data['status'] === 0 ) { // only upon success we change status of item
 
+                    $("#errorMsg").html("&nbsp;");
+
                     $('#items_table > tbody  > tr').each(function() {
 
                         var currentRow = $(this); // cache this constructor
@@ -197,7 +185,6 @@ function setChangeAllStatusesListener() {
                             itemsStatus[trId] = 0;
                             --completedItems;
                             ++uncompletedItems;
-                            //currentRow.children("td:nth-child(1)").text('\tU\t');
                             currentRow.children("td:nth-child(1)").toggleClass("item_completed_sign");
                             currentRow.children("td:nth-child(2)").toggleClass("item_completed_content");
                         }
@@ -205,7 +192,6 @@ function setChangeAllStatusesListener() {
                             itemsStatus[trId] = 1;
                             ++completedItems;
                             --uncompletedItems;
-                            //currentRow.children("td:nth-child(1)").text('\tC\t');
                             currentRow.children("td:nth-child(1)").toggleClass("item_completed_sign");
                             currentRow.children("td:nth-child(2)").toggleClass("item_completed_content");
                         }
@@ -214,12 +200,10 @@ function setChangeAllStatusesListener() {
                     if (completedItems > 0) {
                         $("#clear_completed").html("Clear completed.");
                         $("#clear_completed").show();
-                        //$("#change_all_statuses").checked = true;
                         $('#change_all_statuses').prop('checked',true);
                     }
                     else {
                         $("#clear_completed").hide();
-                        //$("#change_all_statuses").checked = false;
                         $('#change_all_statuses').prop('checked',false);
                     }
 
@@ -229,7 +213,7 @@ function setChangeAllStatusesListener() {
                 }
                 else {
                     console.log("Unable to update item with id: " + itemId + ". Reason: " + data['msg']);
-                    alert("Unable to update item with id: " + itemId + ". Reason: " + data['msg']); //TODO - prompt in a more friendly way
+                    $("#errorMsg").text("Failed to change items status: " + data['msg']);
                 }
             }
         });
@@ -247,7 +231,6 @@ function setEditContent() {
         var itemId = tr.attr('id').substring(tr.attr('id').indexOf('-') + 1);
         var len;
 
-        e.stopPropagation();    // todo relevant ??
         todoElement = $(this);
         currContent = $(this).html();
 
@@ -286,12 +269,13 @@ function updateTodoContent(itemId) {
         success: function (data)
         {
             if (data['status'] === 0 ) { // only upon success we change status of item
+                $("#errorMsg").html("&nbsp;");
                 $this.parent().text($this.val());
                 $this.remove();
             }
             else {
                 console.log("Unable to update item with id: " + itemId + ". Reason: " + data['msg']);
-                alert("Unable to update item with id: " + itemId + ". Reason: " + data['msg']); //TODO - prompt in a more friendly way
+                $("#errorMsg").text("Failed to update item content: " + data['msg']);
             }
         }
     });
@@ -304,8 +288,6 @@ function setDeleteImage() {
 
     // delete item
     $(".delete_icon").unbind().on("click", function(e) { // we don't delete only until approved by server
-
-        e.preventDefault(); // todo if relevant, move after var declarations
 
         var tr = $(this).parent().parent();
         var itemId = tr.attr('id').substring(tr.attr('id').indexOf('-') + 1);
@@ -320,16 +302,14 @@ function setDeleteImage() {
                 var itemsStr;
 
                 if (data['status'] === 0 ) { // only upon success we delete this row
+                    $("#errorMsg").html("&nbsp;");
                     tr.remove();
                     (itemStatus === 1) ? --completedItems : --uncompletedItems;
-                    //console.log("upon delete: com:" + completedItems + ", uncom: " + uncompletedItems);
 
                     if (completedItems > 0 && uncompletedItems === 0) { // all the items were completed
-                        //$("#change_all_statuses").checked = true;
                         $('#change_all_statuses').prop('checked',true);
                     }
                     else {
-                        //$("#change_all_statuses").checked = false;
                         $('#change_all_statuses').prop('checked',false);
 
                         if (completedItems > 0) {
@@ -355,7 +335,7 @@ function setDeleteImage() {
                 }
                 else {
                     console.log("Unable to delete item with id: " + itemId + ", with content: " + tr.children("td:nth-child(2)").val());
-                    alert("Failed to delete new item") //TODO - prompt in a more friendly way
+                    $("#errorMsg").text("Failed to delete item: " + data['msg']);
                 }
             }
         });
@@ -376,30 +356,27 @@ function setDeleteImage() {
 
 function setInputEventListener() {
 
+
     //bind input form
     $("#add_new_item").bind("keypress", function(e) {
         var keyCode;
-        // todo maybe i can move out the line $("#add_new_item").val().length to var
+        var contentLen = $("#add_new_item").val().length;
 
         if (!e) e = window.event;
 
         keyCode = e.keyCode || e.which;
 
-        //if (keyCode == '13') newItemListener();
         // verify that not only 'enter' is pressed
-        if (keyCode === 13 && $("#add_new_item").val().length >= 1) newItemListener();
+        if (keyCode === 13 && contentLen >= 1) newItemListener();
     });
 
-    //$("#add_new_item").bind("click", function(e) {
-    //
-    //    // verify that not only 'enter' is pressed
-    //    if ($("#add_new_item").val().length > 1) newItemListener();
-    //});
 
     $("#add_new_item").focus();
 
     $("#add_new_item").focusout(function() {
-        if ($("#add_new_item").val().length >= 1) newItemListener();
+        var contentLen = $("#add_new_item").val().length;
+
+        if (contentLen >= 1) newItemListener();
     });
 }
 
@@ -414,12 +391,13 @@ function loadItems() {
         if (data['status'] === 1) {
 
             console.log("Failed to receive all items. Reason: " + data['msg']);
-            alert("Failed. REASON: " + data['msg']); //TODO - do something more friendly
+            $("#errorMsg").text("Failed to load items: " + data['msg']);
             return;
         }
 
-
-        $("#change_all_statuses_checkbox").append("<input id='change_all_statuses' type='checkbox'>");
+        $("#errorMsg").html("&nbsp;");
+        $("#change_all_statuses_checkbox").append("<input id='change_all_statuses' type='checkbox'>" +
+        "<label for='change_all_statuses'>Mark all as complete</label>");
 
         items = data['msg']['list'];
 
@@ -432,13 +410,9 @@ function loadItems() {
             id = items[i]['id'];
             status = items[i]['status'];
             content = decodeURIComponent(items[i]['content']);
-            //console.log("reg: " + content);
-            //console.log("decoded: " + decodeURIComponent(items[i]['content']));
 
             appendNewItem(id, parseInt(status), content);
         }
-
-        //nextId = numOfItems; //If we now loaded n tasks from server, we want id assign to start with n+1
 
         if (completedItems > 0) {
             $("#clear_completed").html("Clear completed.");
@@ -446,14 +420,12 @@ function loadItems() {
         }
 
         // display 'change all' button
-        //$("#change_all_statuses").checked = false;
         $('#change_all_statuses').prop('checked',false);
 
         if (numOfItems === 0 ) {
             $("#change_all_statuses").hide();
         }
         else if (completedItems > 0 && completedItems === numOfItems) {
-            //$("#change_all_statuses").checked = true;
             $('#change_all_statuses').prop('checked',true);
         }
     });
@@ -474,6 +446,7 @@ function setClearCompletedListener() {
                 var currentRow, trId;
 
                 if (data['status'] === 0 ) { // only upon success we delete all rows
+                    $("#errorMsg").html("&nbsp;");
 
                     $('#items_table > tbody  > tr').each(function() {
 
@@ -487,55 +460,16 @@ function setClearCompletedListener() {
 
 
                     $("#clear_completed").hide();
-                    //$("#change_all_statuses").checked = false;
                     $('#change_all_statuses').prop('checked',false);
 
                     if (uncompletedItems === 0) {
                         $("#change_all_statuses").hide();
-                        //$("#items_left").hide();
                         $("#items_track").hide();
                     }
-
-
-
-
-                    ///////////////////
-
-
-                    //if (completedItems > 0 && uncompletedItems === 0) { // all the items were completed
-                    //    $("#change_all_statuses").checked = true;
-                    //}
-                    //else {
-                    //    $("#change_all_statuses").checked = false;
-                    //
-                    //    if (completedItems > 0) {
-                    //        $("#clear_completed").html("Clear completed.");
-                    //        $("#clear_completed").show();
-                    //        $("#change_all_statuses").show();
-                    //    }
-                    //    else {
-                    //        $("#clear_completed").hide();
-                    //    }
-                    //}
-                    //
-                    //var itemsStr = (uncompletedItems === 1) ? 'item left.' : 'items left.';
-                    //$("#items_left").html("<strong> " + uncompletedItems + " </strong>" + itemsStr);
-                    //
-                    //if (completedItems + uncompletedItems === 0) {
-                    //    $("#change_all_statuses").hide();
-                    //    $("#items_div").hide(200);
-                    //}
-
-
-                    ///////////////////
-
-
-
-
                 }
                 else {
                     console.log("Unable to delete all items. Reason: " + data['msg']);
-                    alert("Failed to delete all messages") //TODO - prompt in a more friendly way
+                    $("#errorMsg").text("Failed to clear completed items: " + data['msg']);
                 }
             }
         });
