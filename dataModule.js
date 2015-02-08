@@ -12,6 +12,7 @@ var COMPLETED_ITEM_CODE = '1';
 var USERNAME_IN_USED = 'This username in used';
 var UNAUTHORIZED_USER = 'Unauthorized user';
 var INVALID_ITEM_ID = 'invalid itemId';
+var INVALID_LOGIN_INPUTS = 'invalid username and/or password';
 
 
 function DataModule() {
@@ -20,13 +21,14 @@ function DataModule() {
     this.data = {};
 
     // for debug use
-    this.data['tal'] = {'password': 'pass', 'sessionId': '0', 'fullName': 'fullName', 'lastConn': new Date(), 'todoList': []};
+    //this.data['tal'] = {'password': 'pass', 'sessionId': '0', 'fullName': 'fullName', 'lastConn': new Date(), 'todoList': []};
     // end debug
 }
 
 DataModule.prototype.addUser = function(username, password, sessionId, fullName) {
 
     if (this.isRegisteredUser(username)) {
+        console.log("username: " + username + " is in used !!");
         return {'status': FAILURE_STATUS, 'msg': USERNAME_IN_USED};
     }
 
@@ -178,6 +180,20 @@ DataModule.prototype.getAllTodoList = function(username, sessionId) {
 
 DataModule.prototype.isRegisteredUser = function (username) {
     return (this.data[username] !== undefined);
+};
+
+DataModule.prototype.isCorrectLoginInputs = function(username, password) {
+    if (username !== undefined && this.data[username] !== undefined && this.data[username]['password'] === password) {
+        return {'status': SUCCESS_STATUS, 'msg': ''};
+    }
+
+    return {'status': FAILURE_STATUS, 'msg': INVALID_LOGIN_INPUTS};
+};
+
+DataModule.prototype.setSessionId = function(username, sessionId) {
+    if (username !== undefined) {
+        this.data[username]['sessionId'] = sessionId;
+    }
 };
 
 DataModule.prototype.isValidRequest = function(username, sessionId) {

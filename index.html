@@ -11,7 +11,29 @@
 
 <body>
 
-    <div id="main_div">
+    <div id="loginPage">
+        <span id="register">
+            <input type="text" id="reg_fullname" placeholder="full name" autofocus="true"><br>
+            <input type="text" id="reg_username" placeholder="username" autofocus="true"><br>
+            <input type="text" id="reg_password" placeholder="password" autofocus="true"><br>
+            <input type="text" id="reg_password_verification" placeholder="password verification" autofocus="true"><br>
+            <input type="button" id="reg_submit" value="register">
+        </span><br><br>
+
+        <span id="login">
+            <input type="text" id="login_username" placeholder="username" autofocus="true"><br>
+            <input type="text" id="login_password" placeholder="password" autofocus="true"><br>
+            <input type="button" id="login_submit" value="login">
+        </span><br><br>
+
+        <span id="loginPage_error_msg"></span>
+
+    </div>
+
+
+
+
+    <div id="todo_list_page">
         <h1>todos</h1>
 
         <div id="errorMsg">&nbsp;</div>

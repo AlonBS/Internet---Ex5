@@ -3,6 +3,12 @@
  */
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//                                      to-do list page
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // global variables
 var nextId;
@@ -16,8 +22,10 @@ var itemsStatus;
 function newItemListener()
 {
     var inputField = $("#add_new_item");
-    var content = inputField.val();
+    var content = scanUserInput(inputField.val());
     var itemId = (nextId++).toString();
+
+    // todo i need to prevent xss and other attacks !!
 
     $.ajax({
         type: "POST",
@@ -27,7 +35,7 @@ function newItemListener()
         {
             if (data['status'] === 0 ) { // only upon success we display new item
 
-                appendNewItem(itemId, 0, content); // new item is always uncompleted by default
+                appendNewItem(itemId, 0, decodeURIComponent(content)); // new item is always uncompleted by default
                 inputField.val('');
             }
             else {
@@ -371,7 +379,7 @@ function setInputEventListener() {
     });
 
 
-    $("#add_new_item").focus();
+    //$("#add_new_item").focus(); // todo maybe not relevant since the input button has "autofocus"...
 
     $("#add_new_item").focusout(function() {
         var contentLen = $("#add_new_item").val().length;
@@ -482,6 +490,178 @@ $(function() {
     nextId = uncompletedItems = completedItems = 0;
     itemsStatus = {}; // itemsStatus[id] -> gives this item's status
 
+    $.ajax({
+        type: "GET",
+        url: "/activeSession",
+        success: function (data)
+        {
+
+            if (data['page'] === 'todolist' ) {
+                showTodoListPage();
+            }
+            else if (data['page'] === 'login' ){
+                showLoginPage();
+            }
+        }
+    });
+
+    //setInputEventListener();
+    //
+    //loadItems();
+    //
+    //setClearCompletedListener();
+    //
+    //setChangeAllStatusesListener();
+
+    //// register form
+    //setRegisterListener();
+    //
+    //// login form
+    //setLoginListener();
+});
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//                                      login and registration page
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function setRegisterListener() {
+
+    //sets clear-completed onclick event
+    $("#reg_submit").on("click", function () {
+
+        console.log("on register..");
+
+        var fullname = $("#reg_fullname").val();
+        var username = $("#reg_username").val();
+        var pass = $("#reg_password").val();
+        var passVerification = $("#reg_password_verification").val();
+        var checkNameAndUsernameRegex = /^[A-Za-z0-9 _]{3,20}$/;
+        var checkPasswordRegex = /^[A-Za-z0-9 _]{6,20}$/;
+
+
+        if (!checkNameAndUsernameRegex.test(fullname)) {
+            console.log("full name must include 3-20 of the following: a-z, A-Z, 0-9, ' ' or '_' signs!");
+            $("#loginPage_error_msg").text("full name must include 3-20 of the following: a-z, A-Z, 0-9, ' ' or '_' signs!");
+            return;
+        }
+        else if (!checkNameAndUsernameRegex.test(username)) {
+            console.log("username must include 3-20 of the following: a-z, A-Z, 0-9, ' ' or '_' signs!");
+            $("#loginPage_error_msg").text("username must include 3-20 of the following: a-z, A-Z, 0-9, ' ' or '_' signs!");
+            return;
+        }
+        else if (!checkPasswordRegex.test(pass)) {
+            console.log("password must include 6-20 of the following: a-z, A-Z, 0-9, ' ' or '_' signs!");
+            $("#loginPage_error_msg").text("password must include 6-20 of the following: a-z, A-Z, 0-9, ' ' or '_' signs!");
+            return;
+        }
+        else if (pass !== passVerification) {
+            console.log("pass: " + pass + " !== passVer: " + passVerification);
+            $("#loginPage_error_msg").text("password differs than password verification");
+            return;
+        }
+
+        $("#loginPage_error_msg").text("");
+        console.log("send to server: fullname: " + fullname + ", username: " + username + ", pass: " + pass);
+        $.ajax({
+            type: "POST",
+            url: "/register",
+            data: {username: username, fullname: fullname, password: pass},
+            success: function (data)
+            {
+
+                if (data['status'] === 0 ) { // only upon success we delete all rows
+                    showTodoListPage();
+                }
+                else {
+                    console.log("An error occured during registration. Reason: " + data['msg']);
+                    $("#loginPage_error_msg").text("An error occured during registration. Reason: " + data['msg']);
+                }
+            }
+        });
+    });
+}
+
+
+function setLoginListener() {
+
+    //sets clear-completed onclick event
+    $("#login_submit").on("click", function () {
+        console.log("on login..");
+
+        var username = $("#login_username").val();
+        var pass = $("#login_password").val();
+        var checkUsernameRegex = /^[A-Za-z0-9 _]{3,20}$/;
+        var checkPasswordRegex = /^[A-Za-z0-9 _]{6,20}$/;
+
+        console.log("username: " + username + ", pass: " + pass);
+
+        if (!checkUsernameRegex.test(username) || !checkPasswordRegex.test(pass)) {
+            console.log("invalid username and/or password");
+            $("#loginPage_error_msg").text("invalid username and/or password");
+        }
+
+
+        $("#loginPage_error_msg").text("");
+        console.log("send to server: username: " + username + ", pass: " + pass);
+        $.ajax({
+            type: "GET",
+            url: "/login",
+            data: {username: username, password: pass},
+            success: function (data)
+            {
+
+                if (data['status'] === 0 ) { // only upon success we delete all rows
+                    showTodoListPage();
+                }
+                else {
+                    console.log("An error occured during login. Reason: " + data['msg']);
+                    $("#loginPage_error_msg").text("An error occured during login. Reason: " + data['msg']);
+                }
+            }
+        });
+    });
+}
+
+
+
+function scanUserInput(content) {
+    if (content === undefined)
+        return;
+
+    console.log("content: " + content);
+
+    var startBracketIndex = content.indexOf("<");
+    var endBracketIndex = content.indexOf(">");
+    var startBracketCodeIndex = content.indexOf("%3C");
+    var endBracketCodeIndex = content.indexOf("%3E");
+    var contentLowerCase = content.toLowerCase();
+
+    if ((startBracketCodeIndex !== -1 || startBracketIndex !== -1) &&
+        (endBracketCodeIndex !== -1 || endBracketIndex !== -1) &&
+        ((contentLowerCase.indexOf("script") !== -1) ||
+        (contentLowerCase.indexOf("src") !== -1) ||
+        (contentLowerCase.indexOf("rel") !== -1) ||
+        (contentLowerCase.indexOf(".cookie") !== -1))){
+
+        //the content contains the word 'script' and has both '>' and '<' signs
+        content = content.replace(/<|%3C/g, '(');
+        content = content.replace(/>|%3E/g, ')');
+    }
+
+    //console.log("after replaces: " + content);
+
+    return content;
+}
+
+function showTodoListPage() {
+    console.log("show todo list page..");
+
+    $("#loginPage").hide();
+    $("#todo_list_page").show();
+
     setInputEventListener();
 
     loadItems();
@@ -489,6 +669,18 @@ $(function() {
     setClearCompletedListener();
 
     setChangeAllStatusesListener();
-});
+}
 
 
+function showLoginPage() {
+    console.log("show login page..");
+
+    $("#loginPage").show();
+    $("#todo_list_page").hide();
+
+    // register form
+    setRegisterListener();
+
+    // login form
+    setLoginListener();
+}

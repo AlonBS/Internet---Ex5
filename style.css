@@ -49,8 +49,11 @@ input[type="checkbox"] {
     display: none;
 }
 
+#todo_list_page, #loginPage {
+    display: none;
+}
 
-#main_div h1 {
+#todo_list_page h1 {
     position: relative;
     top: 20px;
     width: 100%;
@@ -65,16 +68,17 @@ input[type="checkbox"] {
 }
 
 
-#errorMsg {
+#errorMsg, #loginPage_error_msg {
     color: red;
     font: 16px 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background: #f5f5f5;
     position: relative;
     margin: 100px 0 0 0;
     width: 100%;
-    font-size: 20px;
+    font-size: 16px;
     text-align: center;
 }
+
 
 #main_items_div {
     background: #fff;
