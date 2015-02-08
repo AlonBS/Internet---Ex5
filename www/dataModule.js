@@ -2,14 +2,14 @@
  * Created by orenstal on 03/02/2015.
  */
 
-var jquery = require('./lib/jquery-2.1.3.js');
+var jquery = require('./jquery-2.1.3.js');
 
 // todo maybe we should use 'const' instead of 'var' (checks ES !)
 var FAILURE_STATUS = 1;
 var SUCCESS_STATUS = 0;
 var ACTIVE_ITEM_CODE = '0';
 var COMPLETED_ITEM_CODE = '1';
-var USERNAME_IN_USED = 'This username in used';
+var USERNAME_IN_USED = 'The chosen username is in used. Please choose different username';
 var UNAUTHORIZED_USER = 'Unauthorized user';
 var INVALID_ITEM_ID = 'invalid itemId';
 var INVALID_LOGIN_INPUTS = 'invalid username and/or password';
@@ -19,6 +19,7 @@ function DataModule() {
     // key: username, value: {'password': password, 'sessionId': sessionId, 'fullName': fullName,
     // 'todoList': array of {'id': itemId, 'content': content, 'status': 'inProcess/completed'}}
     this.data = {};
+    this.sessionIdToUsernameMap = {};
 
     // for debug use
     //this.data['tal'] = {'password': 'pass', 'sessionId': '0', 'fullName': 'fullName', 'lastConn': new Date(), 'todoList': []};
@@ -33,13 +34,16 @@ DataModule.prototype.addUser = function(username, password, sessionId, fullName)
     }
 
     this.data[username] = {'password': password, 'sessionId': sessionId, 'fullName': fullName, 'lastConn': new Date(), 'todoList': []};
+    this.sessionIdToUsernameMap[sessionId] = username;
 
     return {'status': SUCCESS_STATUS, 'msg': ''};
 };
 
 
-DataModule.prototype.addToDo = function(username, sessionId, itemId, content) {
-    if (this.isValidRequest(username, sessionId)) {
+DataModule.prototype.addToDo = function(sessionId, itemId, content) {
+    var username = this.sessionIdToUsernameMap[sessionId];
+
+    if (this.isValidRequest(sessionId)) {
 
         if (this.getListIndex(username, itemId) === -1) {
             this.data[username]['todoList'].push({'id': itemId, 'content': content, 'status': ACTIVE_ITEM_CODE});
@@ -55,10 +59,11 @@ DataModule.prototype.addToDo = function(username, sessionId, itemId, content) {
 };
 
 
-DataModule.prototype.changeTodoItem = function(username, sessionId, itemId, newStatus, newContent) {
+DataModule.prototype.changeTodoItem = function(sessionId, itemId, newStatus, newContent) {
     var index;
+    var username = this.sessionIdToUsernameMap[sessionId];
 
-    if (this.isValidRequest(username, sessionId)) {
+    if (this.isValidRequest(sessionId)) {
 
         index = this.getListIndex(username, itemId);
 
@@ -101,10 +106,11 @@ DataModule.prototype.changeTodoItem = function(username, sessionId, itemId, newS
 
 
 
-DataModule.prototype.deleteTodoItem = function(username, sessionId, itemId) {
+DataModule.prototype.deleteTodoItem = function(sessionId, itemId) {
     var index;
+    var username = this.sessionIdToUsernameMap[sessionId];
 
-    if (this.isValidRequest(username, sessionId)) {
+    if (this.isValidRequest(sessionId)) {
         if (itemId === '-1') {
             this.deleteAllCompleted(username);
             this.updateLastConnection(username);
@@ -157,9 +163,10 @@ DataModule.prototype.deleteAllCompleted = function(username) {
 };
 
 
-DataModule.prototype.getAllTodoList = function(username, sessionId) {
+DataModule.prototype.getAllTodoList = function(sessionId) {
+    var username = this.sessionIdToUsernameMap[sessionId];
 
-    if (this.isValidRequest(username, sessionId)) {
+    if (this.isValidRequest(sessionId)) {
         this.updateLastConnection(username);
 
         var lastCellIndex = this.data[username]['todoList'].length-1;
@@ -193,11 +200,13 @@ DataModule.prototype.isCorrectLoginInputs = function(username, password) {
 DataModule.prototype.setSessionId = function(username, sessionId) {
     if (username !== undefined) {
         this.data[username]['sessionId'] = sessionId;
+        this.sessionIdToUsernameMap[sessionId] = username;
     }
 };
 
-DataModule.prototype.isValidRequest = function(username, sessionId) {
+DataModule.prototype.isValidRequest = function(sessionId) {
 
+    var username = this.sessionIdToUsernameMap[sessionId];
     var currTime = new Date();
 
     if (this.data[username] !== undefined && this.data[username]['sessionId'] === sessionId &&

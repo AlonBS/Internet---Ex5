@@ -492,7 +492,7 @@ $(function() {
 
     $.ajax({
         type: "GET",
-        url: "/activeSession",
+        url: "/showPage",
         success: function (data)
         {
 
@@ -576,9 +576,14 @@ function setRegisterListener() {
                     showTodoListPage();
                 }
                 else {
-                    console.log("An error occured during registration. Reason: " + data['msg']);
-                    $("#loginPage_error_msg").text("An error occured during registration. Reason: " + data['msg']);
+                    console.log(data['msg']);
+                    $("#loginPage_error_msg").text(data['msg']);
                 }
+            },
+            error: function ()
+            {
+                console.log("The chosen username is in used. Please choose different username");
+                $("#loginPage_error_msg").text("The chosen username is in used. Please choose different username");
             }
         });
     });
@@ -617,9 +622,14 @@ function setLoginListener() {
                     showTodoListPage();
                 }
                 else {
-                    console.log("An error occured during login. Reason: " + data['msg']);
-                    $("#loginPage_error_msg").text("An error occured during login. Reason: " + data['msg']);
+                    console.log(data['msg']);
+                    $("#loginPage_error_msg").text(data['msg']);
                 }
+            },
+            error: function ()
+            {
+                console.log("Invalid username / password. Please try again");
+                $("#loginPage_error_msg").text("Invalid username / password. Please try again");
             }
         });
     });

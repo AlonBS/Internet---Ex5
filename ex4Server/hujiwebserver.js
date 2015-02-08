@@ -41,16 +41,16 @@ exports.static = function (rootFolder) {
 
     shortServerStaticRootFolder = rootFolder;
 
-    //try {
-    //    serverStaticRootFolder = getFullPath(rootFolder, false);
-    //
-    //    // verify that the received root folder  exists
-    //    if (!fs.existsSync(serverStaticRootFolder)) {
-    //        writeLog("hujiwebserver", "static", "invalid root folder", true);
-    //
-    //        //return;
-    //    }
-    //} catch (e) {}
+    try {
+        serverStaticRootFolder = getFullPath(rootFolder, false);
+
+        //// verify that the received root folder  exists
+        //if (!fs.existsSync(serverStaticRootFolder)) {
+        //    writeLog("hujiwebserver", "static", "invalid root folder", true);
+        //
+        //    //return;
+        //}
+    } catch (e) {}
 
     return staticResourceHandler;
 };

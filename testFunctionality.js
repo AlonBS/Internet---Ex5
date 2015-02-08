@@ -2,7 +2,7 @@
  * Created by orenstal on 03/02/2015.
  */
 
-var dataModule = require('./dataModule.js');
+var dataModule = require('./www/dataModule.js');
 
 var FAILURE_STATUS = 1;
 var SUCCESS_STATUS = 0;
