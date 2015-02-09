@@ -5,12 +5,11 @@
 
 var jquery = require('./jquery-2.1.3.js');
 
-// todo maybe we should use 'const' instead of 'var' (checks ES !)
 var FAILURE_STATUS = 1;
 var SUCCESS_STATUS = 0;
 var ACTIVE_ITEM_CODE = '0';
 var COMPLETED_ITEM_CODE = '1';
-var USERNAME_IN_USE = 'The chosen username is in used. Please choose different username';
+var USERNAME_IN_USED = 'The chosen username is in used. Please choose different username';
 var UNAUTHORIZED_USER = 'Unauthorized user';
 var INVALID_ITEM_ID = 'invalid itemId';
 var INVALID_LOGIN_INPUTS = 'invalid username and/or password';
@@ -38,7 +37,7 @@ DataModule.prototype.addUser = function(username, password, sessionId, fullName)
 
     if (this.isRegisteredUser(username)) {
         console.log("username: " + username + " is in use.");
-        return {'status': FAILURE_STATUS, 'msg': USERNAME_IN_USE};
+        return {'status': FAILURE_STATUS, 'msg': USERNAME_IN_USED};
     }
 
     this.data[username] = {'password': password, 'sessionId': sessionId, 'fullName': fullName, 'lastConn': new Date(), 'todoList': []};
@@ -233,6 +232,9 @@ DataModule.prototype.isCorrectLoginInputs = function(username, password) {
 
 DataModule.prototype.setSessionId = function(username, sessionId) {
     if (username !== undefined) {
+        // delete the previous session id
+        delete this.sessionIdToUsernameMap[this.data[username]['sessionId']];
+
         this.data[username]['sessionId'] = sessionId;
         this.sessionIdToUsernameMap[sessionId] = username;
     }
@@ -263,7 +265,7 @@ DataModule.prototype.isValidRequest = function(sessionId) {
  * Only opon valid request (for instance - add new item) we extend the time of the current
  * session - to allow disconnection of the remove and after x time, and with continuous usage.
  */
-DataModule.prototype.updateLastConnection = function(username) {
+DataModule.prototype.updateLastConnection = function (username) {
     this.data[username]['lastConn'] = new Date();
 };
 

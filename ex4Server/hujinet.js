@@ -42,7 +42,7 @@ exports.createServer = function(port, onRequestArrival, callBackFunc) {
         });
 
 
-        socket.setTimeout(2000, function() {   // TODO: should be 2000 !!
+        socket.setTimeout(100000, function() {  // todo 2000
 
             if (response.isSent == false) {
                 response.status(404).send();

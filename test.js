@@ -3,25 +3,56 @@
  */
 
 var http = require('http');
-var fs = require('fs');
-var webServer = require('./hujiwebserver.js');
+var webServer = require('./main.js');
+
+var SUCCESS_STATUS = 0;
+var FAILURE_STATUS = 1;
+var USERNAME_IN_USED = 'The chosen username is in used. Please choose different username';
+var UNAUTHORIZED_USER = 'Unauthorized user';
+var INVALID_ITEM_ID = 'invalid itemId';
+var INVALID_LOGIN_INPUTS = 'invalid username and/or password';
+
+var sessionId;
 
 
-function createHttpRequest(options, body, testNum, expectedStatusCode) {
+function createHttpRequest(options, body, testNum, expectedReturnCode, expectedStatus, expectedMsg) {
     var req = http.request(options, function (res) {
 
+
+
         res.setEncoding = 'utf8';
-        if (res.statusCode === expectedStatusCode)
-        {
-            console.log("test " + testNum + ": pass");
-        }
-        else {
-            console.log("test " + testNum + ": failed. got " + res.statusCode + " instead of " + expectedStatusCode);
+
+        console.log(res.headers['set-cookie']);
+
+        if (res.headers['set-cookie'] !== undefined) {
+            var regPattern = new RegExp(/sessionId=(.*);/);
+            var extractedSessionId = regPattern.exec(res.headers['set-cookie']);
+
+            if (extractedSessionId !== null) {
+                sessionId = extractedSessionId[1];
+                console.log("test " + testNum + ", sessionId: " + sessionId);
+            }
+
         }
 
-        res.on('end', function() {
-            console.log("ENDED");
-        })
+        res.on('data', function(data) {
+            data = JSON.parse(data);
+
+            if (res.statusCode === expectedReturnCode && data['status'] === expectedStatus && data['msg'] === expectedMsg)
+            {
+                console.log("test " + testNum + ": pass");
+            }
+            else {
+                console.log("test " + testNum + ": failed. got: return status code: " + res.statusCode + " instead of " +
+                expectedReturnCode + ", server status: " + data['status'] + " instead of " + expectedStatus + ", msg: " +
+                data['msg'] + " instead of " + expectedMsg);
+            }
+
+        });
+
+        //res.on('end', function() {
+        //    console.log("ENDED");
+        //})
     });
 
     req.on('error', function(e) {
@@ -35,41 +66,143 @@ function createHttpRequest(options, body, testNum, expectedStatusCode) {
 }
 
 
-function test1(path) {
-    fs.stat(path, function (err, stats) {
+// the username doesn't exist.
+function test1() {
 
-        if (err || !stats.isFile()) {
+    var body = "username=orenstal&password=abc123456";
 
-            console.log("ERROR 1");
-            return;
-        }
+    var options = {
+        hostname: 'localhost',
+        port: 8888,
+        method: 'GET',
+        headers: {
+            'connection' : "keep-alive",
+            'Content-Type' : 'text/plain',
+            'Content-Length' : body.length
+        },
+        path: '/login'
 
-        fs.readFile(path, 'ascii', function (err, data) {
+    };
 
-            if (err) {
-                console.log("ERROR READING FILE ");
-                return;
-            }
 
-            var options = {
-                hostname: 'localhost',
-                port: 8888,
-                method: 'PUT',
-                headers: {
-                    'connection' : "keep-alive",
-                    'Content-Type' : 'text/plain',
-                    'Content-Length' : data.length
-                },
-                path: '/uploads/uploadMe.txt'
-            };
-
-            createHttpRequest(options, data, 1, 200);
-        });
-    });
+    createHttpRequest(options, body, 1, 200, FAILURE_STATUS, INVALID_LOGIN_INPUTS);
 }
 
 
+// invalid username (less than 3 characters) during registration
 function test2() {
+
+    var body = "username=al&fullname=Alon Ben Shimol&password=abc123456";
+
+    var options = {
+        hostname: 'localhost',
+        port: 8888,
+        method: 'POST',
+        headers: {
+            'connection' : "keep-alive",
+            'Content-Type' : 'text/plain',
+            'Content-Length' : body.length
+        },
+        path: '/register'
+
+    };
+
+
+    createHttpRequest(options, body, 2, 400, FAILURE_STATUS, UNAUTHORIZED_USER);
+}
+
+// successful registration
+function test3() {
+
+    var body = "username=tal&fullname=tal orenstein&password=abc123456";
+
+    var options = {
+        hostname: 'localhost',
+        port: 8888,
+        method: 'POST',
+        headers: {
+            'connection' : "keep-alive",
+            'Content-Type' : 'text/plain',
+            'Content-Length' : body.length
+        },
+        path: '/register'
+
+    };
+
+
+    createHttpRequest(options, body, 3, 200, SUCCESS_STATUS, '');
+}
+
+// try to register with used username
+function test4() {
+
+    var body = "username=tal&fullname=tal orenstein&password=abc123456";
+
+    var options = {
+        hostname: 'localhost',
+        port: 8888,
+        method: 'POST',
+        headers: {
+            'connection' : "keep-alive",
+            'Content-Type' : 'text/plain',
+            'Content-Length' : body.length,
+            'cookie' : "sessionid=" + sessionId + "; path=/"
+        },
+        path: '/register'
+
+    };
+
+
+    createHttpRequest(options, body, 4, 500, FAILURE_STATUS, USERNAME_IN_USED);
+}
+
+
+// try to login with not existing username
+function test5() {
+
+    var body = "username=notExisting&password=abc123456";
+
+    var options = {
+        hostname: 'localhost',
+        port: 8888,
+        method: 'GET',
+        headers: {
+            'connection' : "keep-alive",
+            'Content-Type' : 'text/plain',
+            'Content-Length' : body.length
+        },
+        path: '/login'
+
+    };
+
+    createHttpRequest(options, body, 5, 200, FAILURE_STATUS, INVALID_LOGIN_INPUTS);
+}
+
+// try to login with existing username but with wrong password (the last digit - 6 - is missing)
+function test6() {
+
+    var body = "username=tal&password=abc12345";
+
+    var options = {
+        hostname: 'localhost',
+        port: 8888,
+        method: 'GET',
+        headers: {
+            'connection' : "keep-alive",
+            'Content-Type' : 'text/plain',
+            'Content-Length' : body.length,
+            'cookie' : "sessionid=" + sessionId + "; path=/"
+        },
+        path: '/login'
+
+    };
+
+    createHttpRequest(options, body, 6, 200, FAILURE_STATUS, INVALID_LOGIN_INPUTS);
+}
+
+// login with existing username and correct password
+function test7() {
+    //var body = "username=tal&password=abc123456";
 
     var options = {
         hostname: 'localhost',
@@ -79,230 +212,61 @@ function test2() {
             'connection' : "keep-alive",
             'Content-Type' : 'text/plain',
             'Content-Length' : 0,
-            'Cookie': 'name=Tal; name2=Alon'
+            'cookie' : "sessionid=" + sessionId + "; path=/"
         },
-        path: '/ex2/green/innerFile.txt?firstName=liraz'
+        path: '/login?username=tal&password=abc123456'
 
     };
 
-    createHttpRequest(options, "", 2, 200);
-}
-
-
-function test3() {
-
-    var options = {
-        hostname: 'localhost',
-        port: 8888,
-        method: 'GET',
-        headers: {
-            'connection' : "keep-alive",
-            'Content-Type' : 'text/plain',
-            'Content-Length' : 0
-        },
-        path: '/only/post/someFile.txt'
-
-    };
-
-    createHttpRequest(options, "", 3, 404);
-}
-
-
-function test4() {
-
-    var options = {
-        hostname: 'localhost',
-        port: 8888,
-        method: 'GET',
-        headers: {
-            'connection' : "keep-alive",
-            'Content-Type' : 'text/plain',
-            'Content-Length' : 0
-        },
-        path: '/only/get/someFile.txt'
-
-    };
-
-    createHttpRequest(options, "", 4, 200);
-}
-
-
-function test5() {
-
-    var options = {
-        hostname: 'localhost',
-        port: 8888,
-        method: 'POST',
-        headers: {
-            'connection' : "keep-alive",
-            'Content-Type' : 'text/plain',
-            'Content-Length' : 0
-        },
-        path: '/only/post/someFile.txt'
-
-    };
-
-    createHttpRequest(options, "", 5, 200);
-}
-
-
-function test6() {
-
-    var options = {
-        hostname: 'localhost',
-        port: 8888,
-        method: 'PUT',
-        headers: {
-            'connection' : "keep-alive",
-            'Content-Type' : 'text/plain',
-            'Content-Length' : 0
-        },
-        path: '/only/put/someFile.txt'
-
-    };
-
-    createHttpRequest(options, "", 6, 200);
-}
-
-
-function test7() {
-
-    var options = {
-        hostname: 'localhost',
-        port: 8888,
-        method: 'DELETE',
-        headers: {
-            'connection' : "keep-alive",
-            'Content-Type' : 'text/plain',
-            'Content-Length' : 0
-        },
-        path: '/only/delete/someFile.txt'
-
-    };
-
-    createHttpRequest(options, "", 7, 200);
+    createHttpRequest(options, "", 7, 200, SUCCESS_STATUS, '');
 }
 
 
 function test8() {
+    //var body = "username=tal&password=abc123456";
 
     var options = {
         hostname: 'localhost',
         port: 8888,
-        method: 'DELETE',
+        method: 'GET',
         headers: {
             'connection' : "keep-alive",
             'Content-Type' : 'text/plain',
-            'Content-Length' : 0
+            'Content-Length' : 0,
+            'cookie' : "sessionid=" + sessionId + "; path=/"
         },
-        path: '/only/delete/notExist.txt'
+        path: '/item'
 
     };
 
-    createHttpRequest(options, "", 8, 200);
+    createHttpRequest(options, "", 8, 200, SUCCESS_STATUS, '');
 }
 
 
-function test9() {
 
-    var options = {
-        hostname: 'localhost',
-        port: 8888,
-        method: 'DELETE',
-        headers: {
-            'connection' : "keep-alive",
-            'Content-Type' : 'text/plain',
-            'Content-Length' : 0
-        },
-        path: '/../../someFile.js'
-
-    };
-
-    createHttpRequest(options, "", 9, 404);
-}
 
 function setUpServerAndUseCases() {
 
-    webServer.start(8888,  function(err, server) {
+    webServer.startServer;
 
-        if (err) {
-            console.log("Error: " + err);
-            server.close();
-            return
-        }
-
-        console.log("Server Connected Successfully!");
-        console.log("------------------------------");
-
-        var myUseExplanation = webServer.myUse('/uploads').toString();
-        console.log("myUse explanation:");
-        console.log(myUseExplanation);
-        console.log("------------------------------");
-
-        server.use('/ex2/:color', function(request, response, next){
-
-            if (request.params.color === 'green' && request.param('firstname') === 'liraz' &&
-                request.cookies.name === 'tal' && request.cookies.name2 === 'alon') {
-                console.log("pass testing extracting param values");
-            }
-            else {
-                console.log("failed testing extracting param values");
-            }
-
-            response.status(200).send("handled by the first 'use'. next is called so verify that also the second " +
-            "handler has been invoked");
-
-            next();
-        });
-
-        server.use('/ex2', function(request, response, next){
-
-            try {
-                var fullPath = getFullPath(request.path);
-
-                // verify that the received root folder  exists
-                if (!fs.existsSync(fullPath)) {
-                    if (response.statusCode === 404) {
-                        console.log("file not found");
-                    }
-                }
-            } catch (e) {}
-
-            response.status(200).send("handled by the second 'use'. next is called but there isn't another resource " +
-            "handler");
-
-            next();
-        });
-
-        server.get('/only/get/', function(request, response, next){
-            response.status(200).send("handled by the first 'get'.");
-        });
-
-        // this method send only the handler !!
-        server.post(function(request, response, next){
-            response.status(200).send("handled by the first 'post'.");
-        });
-
-        server.put('/only/put', function(request, response, next){
-            response.status(200).send("handled by the first 'put'.");
-        });
-
-        server.delete('/only/delete', function(request, response, next){
-            response.status(200).send("handled by the first 'delete'.");
-        });
-
-        test1('./uploadMe.txt');
-        test2();
+        //test1();
+        //test2();
         test3();
-        test4();
-        test5();
-        test6();
-        test7();
-        test8();
-        test9();
+        //test4();
+        //test5();
+        //test6();
+        // wait 1 second to make sure that all the previous requests were handled, and then check the login
+        setTimeout(function() {
+            test7();
+            setTimeout(function() {
+                test8();
+            }, 1000);
+        }, 1000);
 
-        server.stop();
-    });
+        //test9();
+        //
+        //server.stop();
+    //});
 }
 
 

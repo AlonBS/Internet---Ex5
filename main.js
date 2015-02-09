@@ -11,14 +11,13 @@ var webServer = require('./ex4Server/hujiwebserver.js');
 var dataModule = require('./www/dataModule');
 
 var FAILURE_STATUS = 1;
-var SUCCESS_STATUS = 0;
-var USERNAME_IN_USED = 'This username in used';
+var USERNAME_IN_USED = 'The chosen username is in used. Please choose different username';
 var UNAUTHORIZED_USER = 'Unauthorized user';
 var INVALID_ITEM_ID = 'invalid itemId';
 
 var serverPort = 8888;
 
-webServer.start(serverPort,  function(err, server) {
+exports.startServer = webServer.start(serverPort,  function(err, server) {
 
     var data, sessionId, username, retVal,itemId, content, itemStatus;
 
@@ -76,6 +75,8 @@ webServer.start(serverPort,  function(err, server) {
         content = scanUserInput(req.param('value'));
         itemStatus = scanUserInput(req.param('status'));
 
+        console.log("content: " + content);
+
         retVal = data.changeTodoItem(sessionId, itemId,itemStatus, content);
         sendResponse(retVal, res);
     });
@@ -107,7 +108,13 @@ webServer.start(serverPort,  function(err, server) {
         var sessionId = generateSessionId();
         username = scanUserInput(req.param('username'));
 
-        retVal = data.addUser(username, password, sessionId, fullname);
+        if (isValidUserRegisterationInputs(fullname, username, password)) {
+            retVal = data.addUser(username, password, sessionId, fullname);
+        }
+        else {
+            retVal = {'status': FAILURE_STATUS, 'msg': UNAUTHORIZED_USER};
+        }
+
 
         if (retVal['status'] === 0) {
             res.cookie('sessionId', sessionId);
@@ -167,17 +174,18 @@ webServer.start(serverPort,  function(err, server) {
  */
 function sendResponse(retVal, res) {
 
-    var errorCode;
+    var resCode=200;
+
     if (retVal['status'] === FAILURE_STATUS) {
 
         if (retVal['msg'] === UNAUTHORIZED_USER) {
-            errorCode = 400;
+            resCode = 400;
         }
         else if (retVal['msg'] === INVALID_ITEM_ID || retVal['msg'] === USERNAME_IN_USED) {
-            errorCode = 500;
+            resCode = 500;
         }
 
-        res.status(errorCode);
+        res.status(resCode);
     }
 
     res.json(retVal);
@@ -215,6 +223,24 @@ function scanUserInput(content) {
 
     content = decodeURIComponent(content);
     return content;
+}
+
+
+function isValidUserRegisterationInputs(fullname, username, pass) {
+    if (!fullname || !username || !pass) {
+        return false;
+    }
+
+    // input legality testing
+    var checkNameAndUsernameRegex = /^[A-Za-z0-9 _]{3,20}$/;
+    var checkPasswordRegex = /^[A-Za-z0-9 _]{6,20}$/;
+
+    if (!checkNameAndUsernameRegex.test(fullname) || !checkNameAndUsernameRegex.test(username) ||
+        !checkPasswordRegex.test(pass)) {
+        return false;
+    }
+
+    return true;
 }
 
 

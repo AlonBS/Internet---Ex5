@@ -1,6 +1,6 @@
 /**
  * Client Side.js - created By Alon Ben-Shimol & Tal Orenstein
- * Notes: this files contains the logic for both the login screen and the todo-lts
+ * Notes: this files contains the logic for both the login screen and the to-do-lits
  * screen. The reason for that is to reduce as much as possible the number of http requests
  * from the server.
  * (This was a recommendation we read in many places:
@@ -194,6 +194,7 @@ var nextId;             /* Holds the next available id for a new item */
 var uncompletedItems;   /* Holds the number of uncompleted tasks */
 var completedItems;     /* Holds the number of completed tasks */
 var itemsStatus;        /* Maps an item to its status */
+var onEdit;             /* True if the current to-do list is updated at the moment */
 
 
 /**
@@ -233,9 +234,6 @@ function requestAddNewItem()
     var content = scanUserInput(inputField.val()); // a security tests is performed here
     var itemId = (nextId++).toString();
 
-    // todo i need to prevent xss and other attacks !!
-    // TODO: Alon - go for it! but i really don't think you need to.
-    // TODO: IOSI!
 
     $.ajax({
         type: "POST",
@@ -491,13 +489,20 @@ function setEditContent() {
 
     // update content of item
     $(".item_content").unbind().dblclick(function (e) {
-
+        console.log("before: onEdit? " + onEdit);
         var tr = $(this).parent();
         var itemId = tr.attr('id').substring(tr.attr('id').indexOf('-') + 1);
         var len;
 
+        if (onEdit && onEdit !== undefined)
+            return;
+
+        onEdit = true;
+
         todoElement = $(this);
         currContent = $(this).html();
+
+        console.log("currContent: " + currContent);
 
         $(todoElement).html('<input class="todoUpdateContent" type="text" value="' + currContent + '" />');
 
@@ -524,11 +529,12 @@ function setEditContent() {
 }
 
 /**
- * Requests the server to update the content of an existing todo-item.
+ * Requests the server to update the content of an existing to-do-item.
  */
 function requestUpdateTodoContent(itemId) {
 
     var $this = $(".todoUpdateContent");
+    console.log("request: " + $this.val());
 
     $.ajax({
         type: "PUT",
@@ -545,6 +551,12 @@ function requestUpdateTodoContent(itemId) {
                 console.log("Unable to update item with id: " + itemId + ". Reason: " + data['msg']);
                 $("#errorMsg").text("Failed to update item content: " + data['msg']);
             }
+
+            onEdit = false;
+        },
+        error: function ()
+        {
+            onEdit = false;
         }
     });
 }
@@ -771,7 +783,7 @@ function showLoginPage() {
 
 /**
  * If the user is identified (by a valid session) or has completed the registration successfully,
- * or logged-in successfully, the todo-list is displayed.
+ * or logged-in successfully, the to-do-list is displayed.
  */
 function showTodoListPage() {
 
