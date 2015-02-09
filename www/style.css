@@ -309,4 +309,16 @@ html #clear_completed:active {
     text-decoration: underline;
 }
 
+
 /****************************Log-in screen properties******************************/
+h1 {
+
+    font-style: italic;
+}
+
+.loginInfo {
+
+    border-width: thin;
+    padding: 2px;
+    margin: 2px;
+}

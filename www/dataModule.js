@@ -1,5 +1,6 @@
 /**
- * Created by orenstal on 03/02/2015.
+ * Created by Alon Ben-Shimol & Tal Orenstein on 03/02/2015.
+ * This file manages the database of the items on the backend side.
  */
 
 var jquery = require('./jquery-2.1.3.js');
@@ -9,28 +10,35 @@ var FAILURE_STATUS = 1;
 var SUCCESS_STATUS = 0;
 var ACTIVE_ITEM_CODE = '0';
 var COMPLETED_ITEM_CODE = '1';
-var USERNAME_IN_USED = 'The chosen username is in used. Please choose different username';
+var USERNAME_IN_USE = 'The chosen username is in used. Please choose different username';
 var UNAUTHORIZED_USER = 'Unauthorized user';
 var INVALID_ITEM_ID = 'invalid itemId';
 var INVALID_LOGIN_INPUTS = 'invalid username and/or password';
+var EXPIRATION_TIME = 30;
 
 
+/**
+ * Constructor for a data module.
+ */
 function DataModule() {
-    // key: username, value: {'password': password, 'sessionId': sessionId, 'fullName': fullName,
-    // 'todoList': array of {'id': itemId, 'content': content, 'status': 'inProcess/completed'}}
+
     this.data = {};
     this.sessionIdToUsernameMap = {};
-
-    // for debug use
-    //this.data['tal'] = {'password': 'pass', 'sessionId': '0', 'fullName': 'fullName', 'lastConn': new Date(), 'todoList': []};
-    // end debug
 }
 
+/**
+ * Adds a new user to the data base.
+ * @param username - the user's name
+ * @param password - the user's password
+ * @param sessionId - the user's session id
+ * @param fullName - the user's full name
+ * @returns message with approval or disapproval of the request to the remote end.
+ */
 DataModule.prototype.addUser = function(username, password, sessionId, fullName) {
 
     if (this.isRegisteredUser(username)) {
-        console.log("username: " + username + " is in used !!");
-        return {'status': FAILURE_STATUS, 'msg': USERNAME_IN_USED};
+        console.log("username: " + username + " is in use.");
+        return {'status': FAILURE_STATUS, 'msg': USERNAME_IN_USE};
     }
 
     this.data[username] = {'password': password, 'sessionId': sessionId, 'fullName': fullName, 'lastConn': new Date(), 'todoList': []};
@@ -40,7 +48,14 @@ DataModule.prototype.addUser = function(username, password, sessionId, fullName)
 };
 
 
+/**
+ * Adds a new item for the currently logged-on session.
+ * @param sessionId - the currently logged-on session
+ * @param itemId - new item's id
+ * @param content - the content of the new item
+ */
 DataModule.prototype.addToDo = function(sessionId, itemId, content) {
+
     var username = this.sessionIdToUsernameMap[sessionId];
 
     if (this.isValidRequest(sessionId)) {
@@ -59,7 +74,11 @@ DataModule.prototype.addToDo = function(sessionId, itemId, content) {
 };
 
 
+/**
+ * Updates the content and status (possibly both) of an existing item.
+ */
 DataModule.prototype.changeTodoItem = function(sessionId, itemId, newStatus, newContent) {
+
     var index;
     var username = this.sessionIdToUsernameMap[sessionId];
 
@@ -68,8 +87,6 @@ DataModule.prototype.changeTodoItem = function(sessionId, itemId, newStatus, new
         index = this.getListIndex(username, itemId);
 
         if (index !== -1) {
-            //console.log("before- status: " + this.data[username]['todoList'][index]['status'] + ", content: " +
-            //    this.data[username]['todoList'][index]['content']);
 
             if (newStatus === ACTIVE_ITEM_CODE || newStatus === COMPLETED_ITEM_CODE) {
                 this.data[username]['todoList'][index]['status'] = newStatus;
@@ -79,18 +96,17 @@ DataModule.prototype.changeTodoItem = function(sessionId, itemId, newStatus, new
                 this.data[username]['todoList'][index]['content'] = newContent;
             }
 
-            //console.log("after- status: " + this.data[username]['todoList'][index]['status'] + ", content: " +
-            //this.data[username]['todoList'][index]['content']);
 
             this.updateLastConnection(username);
-
             return {'status': SUCCESS_STATUS, 'msg': ''};
         }
+
         else if (newStatus !== undefined) {  //change status to all items
+
             var len = this.data[username]['todoList'].length;
             var i;
 
-            for (i=0; i<len; i++) {
+            for (i = 0; i < len; ++i) {
                 this.data[username]['todoList'][i]['status'] = newStatus;
             }
 
@@ -104,13 +120,16 @@ DataModule.prototype.changeTodoItem = function(sessionId, itemId, newStatus, new
 };
 
 
-
-
+/**
+ * Deletes an item from the DB (if exists)
+ */
 DataModule.prototype.deleteTodoItem = function(sessionId, itemId) {
+
     var index;
     var username = this.sessionIdToUsernameMap[sessionId];
 
     if (this.isValidRequest(sessionId)) {
+
         if (itemId === '-1') {
             this.deleteAllCompleted(username);
             this.updateLastConnection(username);
@@ -118,7 +137,6 @@ DataModule.prototype.deleteTodoItem = function(sessionId, itemId) {
         }
 
         index = this.getListIndex(username, itemId);
-
         if (index !== -1) {
             this.data[username]['todoList'].splice(index, 1);
             this.updateLastConnection(username);
@@ -132,13 +150,15 @@ DataModule.prototype.deleteTodoItem = function(sessionId, itemId) {
 };
 
 
+/*
+ * Returns the index of an item of a specific user
+ */
 DataModule.prototype.getListIndex = function(username, itemId) {
     var i;
     var listArray = this.data[username]['todoList'];
     var len = listArray.length;
 
-    if (itemId === -1)
-        return -1;
+    if (itemId === -1) return -1;
 
     for (i=0; i<len; i++) {
         if (listArray[i]['id'] === itemId) {
@@ -150,12 +170,15 @@ DataModule.prototype.getListIndex = function(username, itemId) {
 };
 
 
+/**
+ * Deletes all completed tasks for a specific user
+ */
 DataModule.prototype.deleteAllCompleted = function(username) {
+
     var i;
     var listArray = this.data[username]['todoList'];
-    var len = listArray.length;
 
-    for (i=listArray.length-1; i>=0 ;i--) {
+    for (i = listArray.length-1 ; i >= 0 ; --i) {
         if (listArray[i]['status'] === COMPLETED_ITEM_CODE) {
             this.data[username]['todoList'].splice(i, 1);
         }
@@ -163,6 +186,9 @@ DataModule.prototype.deleteAllCompleted = function(username) {
 };
 
 
+/**
+ * Returns all the items of a specific user
+ */
 DataModule.prototype.getAllTodoList = function(sessionId) {
     var username = this.sessionIdToUsernameMap[sessionId];
 
@@ -185,10 +211,17 @@ DataModule.prototype.getAllTodoList = function(sessionId) {
 };
 
 
+/**
+ * Returns true is 'username' already exists in this server's DB, and false otherwise.
+ */
 DataModule.prototype.isRegisteredUser = function (username) {
     return (this.data[username] !== undefined);
 };
 
+
+/**
+ * Returns true if current login information was given (matching username and password)
+ */
 DataModule.prototype.isCorrectLoginInputs = function(username, password) {
     if (username !== undefined && this.data[username] !== undefined && this.data[username]['password'] === password) {
         return {'status': SUCCESS_STATUS, 'msg': ''};
@@ -197,6 +230,7 @@ DataModule.prototype.isCorrectLoginInputs = function(username, password) {
     return {'status': FAILURE_STATUS, 'msg': INVALID_LOGIN_INPUTS};
 };
 
+
 DataModule.prototype.setSessionId = function(username, sessionId) {
     if (username !== undefined) {
         this.data[username]['sessionId'] = sessionId;
@@ -204,6 +238,10 @@ DataModule.prototype.setSessionId = function(username, sessionId) {
     }
 };
 
+
+/**
+ * Checks if a specific session is yet to be expired. (30 minutes)
+ */
 DataModule.prototype.isValidRequest = function(sessionId) {
 
     var username = this.sessionIdToUsernameMap[sessionId];
@@ -212,7 +250,7 @@ DataModule.prototype.isValidRequest = function(sessionId) {
     if (this.data[username] !== undefined && this.data[username]['sessionId'] === sessionId &&
         username !== undefined && sessionId !== undefined) {
 
-        if (new Date(currTime - this.data[username]['lastConn']).getMinutes() <= 30) {
+        if (new Date(currTime - this.data[username]['lastConn']).getMinutes() <= EXPIRATION_TIME) {
             return true;
         }
     }
@@ -220,8 +258,14 @@ DataModule.prototype.isValidRequest = function(sessionId) {
     return false;
 };
 
+
+/**
+ * Only opon valid request (for instance - add new item) we extend the time of the current
+ * session - to allow disconnection of the remove and after x time, and with continuous usage.
+ */
 DataModule.prototype.updateLastConnection = function(username) {
     this.data[username]['lastConn'] = new Date();
 };
+
 
 module.exports = DataModule;

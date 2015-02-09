@@ -1,6 +1,9 @@
 /**
- * Created by orenstal on 02/02/2015.
+ * Created by Alon Ben-Shimol & Tal Orenstein on 02/02/2015.
+ * This file server as the actual back-end server. It registers all the resources needed
+ * in order to properly handle and allow a item-adding application "todoApp" to run.
  */
+
 
 var crypto = require('crypto');
 
@@ -13,12 +16,14 @@ var USERNAME_IN_USED = 'This username in used';
 var UNAUTHORIZED_USER = 'Unauthorized user';
 var INVALID_ITEM_ID = 'invalid itemId';
 
-webServer.start(8888,  function(err, server) {
+var serverPort = 8888;
+
+webServer.start(serverPort,  function(err, server) {
+
     var data, sessionId, username, retVal,itemId, content, itemStatus;
 
     if (err) {
         console.log("Error: " + err);
-        //server.close();
         return
     }
 
@@ -27,118 +32,76 @@ webServer.start(8888,  function(err, server) {
 
     data = new dataModule();
 
-    //server.use('/', function(req, res, next) {
-    //    if (req.cookies.username in bla and bla bla) {
-    //        // send to-do list..
-    //    }
-    //    else {
-    //        // send login/registration window
-    //    }
-    //});
-
-
+    /**
+     *  Returns the entire (items) lists.
+     *   if relevant - the cookie should be sent to verify which user it is. if the sessionId is
+     *   unknown or expired, error 400 is returned.
+     */
     server.get('/item', function(req, res, next) {
-        // should returns the entire list
-        // if relevant- the cookie should be sent to verify which user is it. if the sessionId is unknown or expired
-        // you should return error 400 and show the login virtual page with some message
 
-        //username = req.cookies.username;
-        //sessionId = req.cookies.sessionId;
-        //username = scanUserInput(req.cookies.username);
-        sessionId = scanUserInput(req.cookies.sessionid);
-        console.log("sessionId: " + sessionId);
-
-        // for debug use
-        //username = 'tal';
-        //sessionId = '0';
-        //res.cookie('sessionId', '0');
-        //res.cookie('username', 'tal');
-        // end debug
-
-        retVal = data.getAllTodoList(sessionId); // {
+        sessionId = scanUserInput(req.cookies.sessionid); // we prevent injection using cookies as well
+        retVal = data.getAllTodoList(sessionId);
 
         sendResponse(retVal, res);
     });
 
-
+    /**
+     *  Creates a new item body:{id:..,value:}. if id exists for that user return error 500.
+     *  returns {status:(0 (for success) or 1 (for failure)), msg:(failure reason)}
+     *  if relevant - the cookie should be sent to verify which user is it. if the sessionId is
+     *  unknown or expired error 400 is returned.
+     */
     server.post('/item', function(req, res, next) {
-        // should creates new todo item body:{id:..,value:} if id exists for that user return error 500
-        // should return {status:(0 for success or 1 for failure), msg:(failure reason)}
 
-        // if relevant- the cookie should be sent to verify which user is it. if the sessionId is unknown or expired
-        // you should return error 400 and show the login virtual page with some message
-
-        //username = scanUserInput(req.cookies.username);
+        //prevents injections from each possible input
         sessionId = scanUserInput(req.cookies.sessionid);
-
-        // for debug use
-        //username = scanUserInput('tal');
-        //sessionId = scanUserInput('0');
-        //res.cookie('sessionId', '0');
-        //res.cookie('username', 'tal');
-        // end debug
-
         itemId = scanUserInput(req.param('id'));
         content = scanUserInput(req.param('value'));
 
         retVal = data.addToDo(sessionId, itemId, content);
-
         sendResponse(retVal, res);
     });
 
+    /**
+     * Updates a specific item. Returns { status:0 }, or {status : 1, msg : reason } if
+     * failed.
+     * In case cookie is relevant - it is used to identify the current logged-on session.
+     * If expired - 400 is returned.
+     */
     server.put('/item', function(req, res, next) {
-        // should update item body: {id:..value:..,status:(0 for active, 1 for complete}
-        // should return {status:(0 for success or 1 for failure), msg:(failure reason)}
 
-        // if relevant- the cookie should be sent to verify which user is it. if the sessionId is unknown or expired
-        // you should return error 400 and show the login virtual page with some message
-
-        //username = scanUserInput(req.cookies.username);
-
+        // prevents all kinds of injections
         sessionId = scanUserInput(req.cookies.sessionid);
-
-        // for debug use
-        //username = scanUserInput('tal');
-        //sessionId = scanUserInput('0');
-        //res.cookie('sessionId', '0');
-        //res.cookie('username', 'tal');
-        // end debug
-
         itemId = scanUserInput(req.param('id'));
         content = scanUserInput(req.param('value'));
         itemStatus = scanUserInput(req.param('status'));
 
         retVal = data.changeTodoItem(sessionId, itemId,itemStatus, content);
-
         sendResponse(retVal, res);
     });
 
+    /**
+     * Deletes a specific item. On success returns { status: 0, }, on failue { status: 1, msg : reason }.
+     * If cookie is relevant - verifies which user. If session is expired - 400 is returned.
+     */
     server.delete('/item', function(req, res, next) {
-        // should delete item {id: (either item ID or -1 to delete it all)}
-        // should return {status:(0 for success or 1 for failure), msg:(failure reason)}
 
-        // if relevant- the cookie should be sent to verify which user is it. if the sessionId is unknown or expired
-        // you should return error 400 and show the login virtual page with some message
-
-        //username = scanUserInput(req.cookies.username);
+        // prevents injections from all kinds of input
         sessionId = scanUserInput(req.cookies.sessionid);
-
-        //username = scanUserInput('tal');
-        //sessionId = scanUserInput('0');
-        //res.cookie('sessionId', '0');
-        //res.cookie('username', 'tal');
-        // end debug
-
         itemId = scanUserInput(req.param('id'));
-
         retVal = data.deleteTodoItem(sessionId, itemId);
 
         sendResponse(retVal, res);
     });
 
-
+    /**
+     * Registers a new user.
+     * Note that the server itself makes additional input tests, in order to prevent
+     * malicious attack which doesn't necessarily use ClientSide.js as source for attack.
+     */
     server.post('/register', function(req, res, next) {
 
+        // prevent injections from all possible inputs
         var fullname = scanUserInput(req.param('fullname'));
         var password = scanUserInput(req.param('password'));
         var sessionId = generateSessionId();
@@ -155,47 +118,56 @@ webServer.start(8888,  function(err, server) {
     });
 
 
+    /**
+     * Allows a user to log in to the application (if already registered before)
+     * Upon success - a valid cookie is set and sent to the remote-end
+     */
     server.get('/login', function(req, res, next) {
 
         var password = scanUserInput(req.param('password'));
         username = scanUserInput(req.param('username'));
         sessionId = generateSessionId();
 
-
         retVal = data.isCorrectLoginInputs(username, password);
 
         if (retVal['status'] === 0) {
             res.cookie('sessionId', sessionId);
-            //res.cookie('username', username);
             data.setSessionId(username, sessionId);
         }
 
         sendResponse(retVal, res);
     });
 
+    /**
+     * Returns only the relevant portion of the application which will be displayed to the
+     * remote end (either the log in screen, or the actual application)
+     */
     server.get('/showPage', function(req, res, next) {
-        //username = scanUserInput(req.cookies.username);
-        sessionId = scanUserInput(req.cookies.sessionid);
 
+        sessionId = scanUserInput(req.cookies.sessionid);
         if (data.isValidRequest(sessionId)) {
             res.json({'page': 'todolist'});
         }
         else {
             res.json({'page': 'login'});
         }
-
     });
 
 
+    /**
+     * Registers this server as a static resource handler (for the initial request)
+     */
     server.use('/', webServer.static("www"));
 
-    //server.stop();
 });
 
 
+/**
+ * Sends a response to the remote end, with retVal as body, and 'res' as the response object
+ */
 function sendResponse(retVal, res) {
-    var errorCode;
 
+    var errorCode;
     if (retVal['status'] === FAILURE_STATUS) {
 
         if (retVal['msg'] === UNAUTHORIZED_USER) {
@@ -211,9 +183,16 @@ function sendResponse(retVal, res) {
     res.json(retVal);
 }
 
+
+/**
+ * Scans the user input. A similar (yet less rigid) test is performed at the client side.
+ * However, we do now trust requests to arrive only from within the ClientSide.js file, so
+ * we test it on the server side as well. It adds extra security (and less network traffic)
+ * if done also at the client-end.
+ */
 function scanUserInput(content) {
-    if (content === undefined)
-        return;
+
+    if (content === undefined) return;
 
 
     var startBracketIndex = content.indexOf("<");
@@ -221,7 +200,6 @@ function scanUserInput(content) {
     var startBracketCodeIndex = content.indexOf("%3C");
     var endBracketCodeIndex = content.indexOf("%3E");
     var contentLowerCase = content.toLowerCase();
-
 
     if ((startBracketCodeIndex !== -1 || startBracketIndex !== -1) &&
         (endBracketCodeIndex !== -1 || endBracketIndex !== -1) &&
@@ -236,7 +214,6 @@ function scanUserInput(content) {
     }
 
     content = decodeURIComponent(content);
-
     return content;
 }
 

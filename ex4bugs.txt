@@ -1,0 +1,10 @@
+Ex4Bugs
+-------
+
+We had only one small bug to fix in our ex4:
+within the file "hujinet.js" after line 51 "socket.end()", we added the
+line "socket.destroy()". The reason is the socket.end() doesn't promise the socket to get
+close (at timeout in this case), it only sends FIN to the remote-end. This caused us an issue
+where the other side (the browser) wasn't aware that the server has closed its connection, and
+thus kept sending requests using the same socket. The call to destroys assures that both sides
+are synchronized.

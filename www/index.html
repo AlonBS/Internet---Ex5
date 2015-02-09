@@ -12,17 +12,18 @@
 <body>
 
     <div id="loginPage">
+        <h1>Welcome!</h1><br>
         <span id="register">
-            <input type="text" id="reg_fullname" placeholder="full name" autofocus="true"><br>
-            <input type="text" id="reg_username" placeholder="username" autofocus="true"><br>
-            <input type="text" id="reg_password" placeholder="password" autofocus="true"><br>
-            <input type="text" id="reg_password_verification" placeholder="password verification" autofocus="true"><br>
+            <input type="text" class="loginInfo" id="reg_fullname" placeholder="full name" autofocus="true"><br>
+            <input type="text" class="loginInfo" id="reg_username" placeholder="username"><br>
+            <input type="password" class="loginInfo" id="reg_password" placeholder="password"><br>
+            <input type="password" class="loginInfo" id="reg_password_verification" placeholder="password verification"><br>
             <input type="button" id="reg_submit" value="register">
         </span><br><br>
 
         <span id="login">
-            <input type="text" id="login_username" placeholder="username" autofocus="true"><br>
-            <input type="text" id="login_password" placeholder="password" autofocus="true"><br>
+            <input type="text" class="loginInfo" id="login_username" placeholder="username"><br>
+            <input type="password" class="loginInfo" id="login_password" placeholder="password"><br>
             <input type="button" id="login_submit" value="login">
         </span><br><br>
 
@@ -30,12 +31,8 @@
 
     </div>
 
-
-
-
     <div id="todo_list_page">
         <h1>todos</h1>
-
         <div id="errorMsg">&nbsp;</div>
 
         <div id="main_items_div">
@@ -50,7 +47,6 @@
                     </tbody>
                 </table>
 
-
                 <div id="items_track">
                     <span id="items_left"></span>
                     <button id="clear_completed"></button>
@@ -59,16 +55,5 @@
             </div>
         </div>
     </div>
-
-
 </body>
 </html>
-
-<!--
-<body>
-i'm here !!
-<div id="mainDiv"></div>
-
-</body>
-</html>
--->
