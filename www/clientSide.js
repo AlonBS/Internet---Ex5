@@ -92,11 +92,6 @@ function setRegisterListener() {
             },
             error: function ()
             {
-                // todo: there is an error in the following scenario:
-                // 1. on regular tab, register with 'tal'.
-                // 2. on incognito tab, try to register with 'tal'.
-                // 3. after the error message is received, change only the username field to be 'tal2' and send again.
-                // 4. an error message is shown although the server save the new 'tal2' user !!
                 console.log("Used username: " + username);
                 $("#loginPage_error_msg").text("The chosen username is in use. Please choose a different one.");
             }
