@@ -3,7 +3,6 @@
  */
 
 
-
 var errBody = {
     400 : "Error 400: Bad Request",
     401 : "Error 401: Unauthorized",

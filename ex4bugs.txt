@@ -1,10 +1,12 @@
 Ex4Bugs
 -------
 
-We had only one small bug to fix in our ex4:
-within the file "hujinet.js" after line 51 "socket.end()", we added the
-line "socket.destroy()". The reason is the socket.end() doesn't promise the socket to get
-close (at timeout in this case), it only sends FIN to the remote-end. This caused us an issue
-where the other side (the browser) wasn't aware that the server has closed its connection, and
-thus kept sending requests using the same socket. The call to destroys assures that both sides
-are synchronized.
+We had only two small bugs to fix in our ex4:
+1. within the file "hujinet.js" after line 51 "socket.end()", we added the line "socket.destroy()".
+   The reason is that socket.end() doesn't promise the socket to get close (at timeout in this case),
+   it only sends FIN to the remote-end. This caused us an issue where the other side (the browser) wasn't
+   aware that the server has closed its connection, and thus kept sending requests using the same socket.
+   The call to destroys assures that both sides are synchronized.
+2. within the file "hujinet.js" we added the line "response = new httpResponseModule(socket);" after line 16.
+   The reason is that in case of the ajax is received an internal error (with status 500), and send another request
+   on the same socket, the returned status code was remained 500 (because this is the 'default value' we set).

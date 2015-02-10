@@ -24,7 +24,7 @@ function HttpRequest(method, version, header,
     this.path = path;
     this.host = host;
     this.protocol = protocol;
-};
+}
 
 
 HttpRequest.prototype.get = function(attr) {

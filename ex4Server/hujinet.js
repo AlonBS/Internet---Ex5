@@ -10,11 +10,11 @@ exports.createServer = function(port, onRequestArrival, callBackFunc) {
     var server = net.createServer(function(socket) { //'connection' listener
 
         socket.buffer = "";
-        //socket.removeAllListeners('data');
 
         var response = new httpResponseModule(socket);
 
         socket.on('data', function(data) {
+            response = new httpResponseModule(socket);
             this.buffer += data;
             onRequestArrival(this.buffer.toString(), socket, response);
         });
@@ -42,7 +42,7 @@ exports.createServer = function(port, onRequestArrival, callBackFunc) {
         });
 
 
-        socket.setTimeout(100000, function() {  // todo 2000
+        socket.setTimeout(function() {
 
             if (response.isSent == false) {
                 response.status(404).send();
@@ -50,7 +50,7 @@ exports.createServer = function(port, onRequestArrival, callBackFunc) {
 
             socket.end();
             socket.destroy();
-        });
+        }, 2000);
     });
 
 

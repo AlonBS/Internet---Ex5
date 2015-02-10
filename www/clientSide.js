@@ -70,11 +70,11 @@ function setRegisterListener() {
             return;
         }
 
+        console.log("~~ " + username + ", " + fullname + ", " + pass);
 
         //if got here - everything is ok, character-wise
 
         $("#loginPage_error_msg").text("");
-        console.log("send to server: fullname: " + fullname + ", username: " + username + ", pass: " + pass);
         $.ajax({
             type: "POST",
             url: "/register",
@@ -92,6 +92,11 @@ function setRegisterListener() {
             },
             error: function ()
             {
+                // todo: there is an error in the following scenario:
+                // 1. on regular tab, register with 'tal'.
+                // 2. on incognito tab, try to register with 'tal'.
+                // 3. after the error message is received, change only the username field to be 'tal2' and send again.
+                // 4. an error message is shown although the server save the new 'tal2' user !!
                 console.log("Used username: " + username);
                 $("#loginPage_error_msg").text("The chosen username is in use. Please choose a different one.");
             }
@@ -251,6 +256,11 @@ function requestAddNewItem()
                 console.log("Unable to add item with id: " + itemId + ", with content: " + content);
                 $("#errorMsg").text("Failed to add new item.");
             }
+        },
+        error: function ()
+        {
+            console.log("Unable to add item with id: " + itemId + ", with content: " + content);
+            $("#errorMsg").text("Failed to add new item.");
         }
     });
 }
@@ -405,6 +415,11 @@ function setChangeStatus() {
                     console.log("Unable to update item with id: " + itemId + ". Reason: " + data['msg']);
                     $("#errorMsg").text("Failed to change item status: " + data['msg']);
                 }
+            },
+            error: function ()
+            {
+                console.log("Unable to update item with id: " + itemId + ".");
+                $("#errorMsg").text("Failed to change item status");
             }
         });
     });
@@ -471,9 +486,14 @@ function setChangeAllStatusesListener() {
 
                 }
                 else {
-                    console.log("Unable to update item with id: " + itemId + ". Reason: " + data['msg']);
+                    console.log("Unable to update items. Reason: " + data['msg']);
                     $("#errorMsg").text("Failed to change items status: " + data['msg']);
                 }
+            },
+            error: function ()
+            {
+                console.log("Unable to update items due to server internal error");
+                $("#errorMsg").text("Unable to update items due to server internal error");
             }
         });
     }));
@@ -489,7 +509,6 @@ function setEditContent() {
 
     // update content of item
     $(".item_content").unbind().dblclick(function (e) {
-        console.log("before: onEdit? " + onEdit);
         var tr = $(this).parent();
         var itemId = tr.attr('id').substring(tr.attr('id').indexOf('-') + 1);
         var len;
@@ -501,8 +520,6 @@ function setEditContent() {
 
         todoElement = $(this);
         currContent = $(this).html();
-
-        console.log("currContent: " + currContent);
 
         $(todoElement).html('<input class="todoUpdateContent" type="text" value="' + currContent + '" />');
 
@@ -534,7 +551,6 @@ function setEditContent() {
 function requestUpdateTodoContent(itemId) {
 
     var $this = $(".todoUpdateContent");
-    console.log("request: " + $this.val());
 
     $.ajax({
         type: "PUT",
@@ -607,7 +623,6 @@ function setDeleteImage() {
                     $("#items_left").html("<strong> " + uncompletedItems + " </strong>" + itemsStr);
 
                     if (completedItems + uncompletedItems === 0) {
-                        //$("#change_all_statuses").checked = false;
                         $('#change_all_statuses').prop('checked',false);
                         $("#change_all_statuses").hide();
                         $("#items_div").hide(200);
@@ -619,6 +634,11 @@ function setDeleteImage() {
                     console.log("Unable to delete item with id: " + itemId + ", with content: " + tr.children("td:nth-child(2)").val());
                     $("#errorMsg").text("Failed to delete item: " + data['msg']);
                 }
+            },
+            error: function ()
+            {
+                console.log("Unable to item item with id: " + itemId + ".");
+                $("#errorMsg").text("Failed to delete item id " + itemId + ".");
             }
         });
     });
@@ -729,6 +749,11 @@ function setClearCompletedListener() {
                     console.log("Unable to delete all items. Reason: " + data['msg']);
                     $("#errorMsg").text("Failed to clear completed items: " + data['msg']);
                 }
+            },
+            error: function ()
+            {
+                console.log("Unable to delete all items.");
+                $("#errorMsg").text("Failed to clear completed items.");
             }
         });
     });
@@ -742,7 +767,7 @@ function setClearCompletedListener() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Main execution starts from here
-$(function() {
+$(document).ready(function() {
 
     nextId = uncompletedItems = completedItems = 0;
     itemsStatus = {}; // itemsStatus[id] -> returns the status of the item with id 'id'.

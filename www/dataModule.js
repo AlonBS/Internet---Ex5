@@ -36,7 +36,6 @@ function DataModule() {
 DataModule.prototype.addUser = function(username, password, sessionId, fullName) {
 
     if (this.isRegisteredUser(username)) {
-        console.log("username: " + username + " is in use.");
         return {'status': FAILURE_STATUS, 'msg': USERNAME_IN_USED};
     }
 
@@ -85,7 +84,7 @@ DataModule.prototype.changeTodoItem = function(sessionId, itemId, newStatus, new
 
         index = this.getListIndex(username, itemId);
 
-        if (index !== -1) {
+        if (index !== -1 && itemId >= 0) {
 
             if (newStatus === ACTIVE_ITEM_CODE || newStatus === COMPLETED_ITEM_CODE) {
                 this.data[username]['todoList'][index]['status'] = newStatus;
@@ -100,7 +99,7 @@ DataModule.prototype.changeTodoItem = function(sessionId, itemId, newStatus, new
             return {'status': SUCCESS_STATUS, 'msg': ''};
         }
 
-        else if (newStatus !== undefined) {  //change status to all items
+        else if (newStatus !== undefined && itemId === '-1') {  //change status to all items
 
             var len = this.data[username]['todoList'].length;
             var i;

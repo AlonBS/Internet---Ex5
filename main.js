@@ -19,7 +19,7 @@ var serverPort = 8888;
 
 exports.startServer = webServer.start(serverPort,  function(err, server) {
 
-    var data, sessionId, username, retVal,itemId, content, itemStatus;
+    var data;
 
     if (err) {
         console.log("Error: " + err);
@@ -37,6 +37,7 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
      *   unknown or expired, error 400 is returned.
      */
     server.get('/item', function(req, res, next) {
+        var sessionId, retVal;
 
         sessionId = scanUserInput(req.cookies.sessionid); // we prevent injection using cookies as well
         retVal = data.getAllTodoList(sessionId);
@@ -51,6 +52,7 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
      *  unknown or expired error 400 is returned.
      */
     server.post('/item', function(req, res, next) {
+        var sessionId, retVal,itemId, content;
 
         //prevents injections from each possible input
         sessionId = scanUserInput(req.cookies.sessionid);
@@ -68,14 +70,13 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
      * If expired - 400 is returned.
      */
     server.put('/item', function(req, res, next) {
+        var sessionId, retVal,itemId, content, itemStatus;
 
         // prevents all kinds of injections
         sessionId = scanUserInput(req.cookies.sessionid);
         itemId = scanUserInput(req.param('id'));
         content = scanUserInput(req.param('value'));
         itemStatus = scanUserInput(req.param('status'));
-
-        console.log("content: " + content);
 
         retVal = data.changeTodoItem(sessionId, itemId,itemStatus, content);
         sendResponse(retVal, res);
@@ -86,6 +87,7 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
      * If cookie is relevant - verifies which user. If session is expired - 400 is returned.
      */
     server.delete('/item', function(req, res, next) {
+        var sessionId, retVal,itemId;
 
         // prevents injections from all kinds of input
         sessionId = scanUserInput(req.cookies.sessionid);
@@ -101,12 +103,13 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
      * malicious attack which doesn't necessarily use ClientSide.js as source for attack.
      */
     server.post('/register', function(req, res, next) {
+        var retVal;
 
         // prevent injections from all possible inputs
         var fullname = scanUserInput(req.param('fullname'));
         var password = scanUserInput(req.param('password'));
         var sessionId = generateSessionId();
-        username = scanUserInput(req.param('username'));
+        var username = scanUserInput(req.param('username'));
 
         if (isValidUserRegisterationInputs(fullname, username, password)) {
             retVal = data.addUser(username, password, sessionId, fullname);
@@ -118,7 +121,6 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
 
         if (retVal['status'] === 0) {
             res.cookie('sessionId', sessionId);
-            //res.cookie('username', username);
         }
 
         sendResponse(retVal, res);
@@ -130,10 +132,15 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
      * Upon success - a valid cookie is set and sent to the remote-end
      */
     server.get('/login', function(req, res, next) {
+        var retVal;
 
         var password = scanUserInput(req.param('password'));
-        username = scanUserInput(req.param('username'));
-        sessionId = generateSessionId();
+        var username = scanUserInput(req.param('username'));
+        var sessionId = scanUserInput(req.cookies.sessionid);
+
+        if (sessionId === undefined) {
+            sessionId = generateSessionId();
+        }
 
         retVal = data.isCorrectLoginInputs(username, password);
 
@@ -151,7 +158,7 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
      */
     server.get('/showPage', function(req, res, next) {
 
-        sessionId = scanUserInput(req.cookies.sessionid);
+        var sessionId = scanUserInput(req.cookies.sessionid);
         if (data.isValidRequest(sessionId)) {
             res.json({'page': 'todolist'});
         }
@@ -194,7 +201,7 @@ function sendResponse(retVal, res) {
 
 /**
  * Scans the user input. A similar (yet less rigid) test is performed at the client side.
- * However, we do now trust requests to arrive only from within the ClientSide.js file, so
+ * However, we do not trust requests to arrive only from within the ClientSide.js file, so
  * we test it on the server side as well. It adds extra security (and less network traffic)
  * if done also at the client-end.
  */
@@ -226,6 +233,12 @@ function scanUserInput(content) {
 }
 
 
+/**
+ * Scans the user form input(registeration or login). A similar (yet less rigid) test is performed at the client side.
+ * However, we do not trust requests to arrive only from within the ClientSide.js file, so
+ * we test it on the server side as well. It adds extra security (and less network traffic)
+ * if done also at the client-end.
+ */
 function isValidUserRegisterationInputs(fullname, username, pass) {
     if (!fullname || !username || !pass) {
         return false;

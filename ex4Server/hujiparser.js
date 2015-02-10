@@ -51,8 +51,6 @@ exports.parse = function (dataAsString) {
         requestLineMatch[2] = requestLineMatch[2].substr(startIndex, len);
 
 
-
-
         var uriRegex = '^[^\\\\\\.]*([\\\\][\\\\])?[^\\\\]*([\\\\][^\\?]*)(\\?)?(.*)';
         var matches = requestLineMatch[2].match(uriRegex);
 

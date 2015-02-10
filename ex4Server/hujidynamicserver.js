@@ -190,7 +190,6 @@ var next = function() {
 
         var r = resourceHandlers[i];
         var matches = currHttpRequest.path.match(r[0] + "($|\\\\)");
-        //var matches = currHttpRequest.path.match(r[0]);
 
         if (matches !== null && (currHttpRequest.method === r[2] || r[2] === 'any' ) ) {
 
