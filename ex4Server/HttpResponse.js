@@ -139,7 +139,7 @@ HttpResponse.prototype.send = function(body) {
                     this.set('content-type', 'application/octet-stream');
                 }
 
-                this.body = body; //.toString();
+                this.body = body;
                 this.set('content-length', body.length);
             }
             else {

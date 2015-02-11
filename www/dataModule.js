@@ -229,6 +229,9 @@ DataModule.prototype.isCorrectLoginInputs = function(username, password) {
 };
 
 
+/**
+ * Sets the username session id.
+ */
 DataModule.prototype.setSessionId = function(username, sessionId) {
     if (username !== undefined) {
         // delete the previous session id

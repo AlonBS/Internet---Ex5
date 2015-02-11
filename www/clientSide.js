@@ -22,8 +22,6 @@ function setRegisterListener() {
 
     $("#reg_submit").on("click", function () {
 
-        console.log("on register..");
-
         var fullname = $("#reg_fullname").val();
         var username = $("#reg_username").val();
         var pass = $("#reg_password").val();
@@ -70,8 +68,6 @@ function setRegisterListener() {
             return;
         }
 
-        console.log("~~ " + username + ", " + fullname + ", " + pass);
-
         //if got here - everything is ok, character-wise
 
         $("#loginPage_error_msg").text("");
@@ -81,7 +77,6 @@ function setRegisterListener() {
             data: {username: username, fullname: fullname, password: pass},
             success: function (data)
             {
-
                 if (data['status'] === 0 ) {
                     showTodoListPage();
                 }
@@ -539,6 +534,7 @@ function setEditContent() {
         });
     });
 }
+
 
 /**
  * Requests the server to update the content of an existing to-do-item.

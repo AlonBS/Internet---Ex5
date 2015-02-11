@@ -45,6 +45,7 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
         sendResponse(retVal, res);
     });
 
+
     /**
      *  Creates a new item body:{id:..,value:}. if id exists for that user return error 500.
      *  returns {status:(0 (for success) or 1 (for failure)), msg:(failure reason)}
@@ -62,6 +63,7 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
         retVal = data.addToDo(sessionId, itemId, content);
         sendResponse(retVal, res);
     });
+
 
     /**
      * Updates a specific item. Returns { status:0 }, or {status : 1, msg : reason } if
@@ -82,6 +84,7 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
         sendResponse(retVal, res);
     });
 
+
     /**
      * Deletes a specific item. On success returns { status: 0, }, on failue { status: 1, msg : reason }.
      * If cookie is relevant - verifies which user. If session is expired - 400 is returned.
@@ -96,6 +99,7 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
 
         sendResponse(retVal, res);
     });
+
 
     /**
      * Registers a new user.
@@ -117,7 +121,6 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
         else {
             retVal = {'status': FAILURE_STATUS, 'msg': UNAUTHORIZED_USER};
         }
-
 
         if (retVal['status'] === 0) {
             res.cookie('sessionId', sessionId);
@@ -152,6 +155,7 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
         sendResponse(retVal, res);
     });
 
+
     /**
      * Returns only the relevant portion of the application which will be displayed to the
      * remote end (either the log in screen, or the actual application)
@@ -172,7 +176,6 @@ exports.startServer = webServer.start(serverPort,  function(err, server) {
      * Registers this server as a static resource handler (for the initial request)
      */
     server.use('/', webServer.static("www"));
-
 });
 
 

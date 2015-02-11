@@ -22,7 +22,7 @@ function DynamicServer(port) {
             return new Error(err); // throw err;
         }
     });
-};
+}
 
 
 DynamicServer.prototype.stop = function() {

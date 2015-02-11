@@ -6,6 +6,7 @@
 var http = require('http');
 var webServer = require('./main.js');
 
+
 var SUCCESS_STATUS = 0;
 var FAILURE_STATUS = 1;
 var USERNAME_IN_USED = 'The chosen username is in used. Please choose different username';
@@ -119,10 +120,12 @@ function test2() {
     createHttpRequest(options, body, 2, 400, FAILURE_STATUS, UNAUTHORIZED_USER);
 }
 
+
 // successful registration
 function test3() {
 
-    var body = "username=tal&fullname=tal orenstein&password=abc123456";
+    var body = {'username': 'liraz', fullname: 'liraz orenstein', password: 'abc123456'};
+    body = JSON.stringify(body);
 
     var options = {
         hostname: 'localhost',
@@ -130,7 +133,7 @@ function test3() {
         method: 'POST',
         headers: {
             'connection' : "keep-alive",
-            'Content-Type' : 'text/plain',
+            'Content-Type' : 'application/json',
             'Content-Length' : body.length
         },
         path: '/register'
@@ -140,10 +143,11 @@ function test3() {
     createHttpRequest(options, body, 3, 200, SUCCESS_STATUS, '');
 }
 
+
 // try to register with used username
 function test4() {
 
-    var body = "username=tal&fullname=tal orenstein&password=abc123456";
+    var body = "username=liraz&fullname=liraz orenstein&password=abc123456";
 
     var options = {
         hostname: 'localhost',
@@ -184,10 +188,11 @@ function test5() {
     createHttpRequest(options, body, 5, 200, FAILURE_STATUS, INVALID_LOGIN_INPUTS);
 }
 
+
 // try to login with existing username but with wrong password (the last digit - 6 - is missing)
 function test6() {
 
-    var body = "username=tal&password=abc12345";
+    var body = "username=liraz&password=abc12345";
 
     var options = {
         hostname: 'localhost',
@@ -206,6 +211,7 @@ function test6() {
     createHttpRequest(options, body, 6, 200, FAILURE_STATUS, INVALID_LOGIN_INPUTS);
 }
 
+
 // login with existing username and correct password
 function test7() {
 
@@ -219,12 +225,13 @@ function test7() {
             'Content-Length' : 0,
             'cookie' : "sessionid=" + sessionId + "; path=/"
         },
-        path: '/login?username=tal&password=abc123456'
+        path: '/login?username=liraz&password=abc123456'
 
     };
 
     createHttpRequest(options, "", 7, 200, SUCCESS_STATUS, '');
 }
+
 
 // should return empty to-do list
 function test8() {
@@ -267,6 +274,7 @@ function test9() {
     createHttpRequest(options, "", 9, 400, FAILURE_STATUS, UNAUTHORIZED_USER);
 }
 
+
 // adding to-do
 function test10() {
     var body = "id=0&value=submit internet ex 5";
@@ -288,6 +296,7 @@ function test10() {
     createHttpRequest(options, body, 10, 200, SUCCESS_STATUS, '');
 }
 
+
 // trying to add another to-do with the same id
 function test11() {
     var body = "id=0&value=watch TV";
@@ -308,6 +317,7 @@ function test11() {
 
     createHttpRequest(options, body, 11, 500, FAILURE_STATUS, INVALID_ITEM_ID);
 }
+
 
 // verify that the to-do we added was kept in the server.
 function test12() {
@@ -394,6 +404,7 @@ function test15() {
     createHttpRequest(options, body, 15, 500, FAILURE_STATUS, INVALID_ITEM_ID);
 }
 
+
 // add another task
 function test16() {
     var body = "id=1&value=second todo - active";
@@ -415,6 +426,7 @@ function test16() {
     createHttpRequest(options, body, 16, 200, SUCCESS_STATUS, '');
 }
 
+
 // add the third task
 function test17() {
     var body = "id=2&value=third todo";
@@ -435,6 +447,7 @@ function test17() {
 
     createHttpRequest(options, body, 17, 200, SUCCESS_STATUS, '');
 }
+
 
 // verify that the to-do content was updated in the server.
 function test18() {
@@ -478,6 +491,7 @@ function test19() {
     createHttpRequest(options, body, 10, 200, SUCCESS_STATUS, '');
 }
 
+
 // verify that the to-do list was updated in the server.
 function test20() {
 
@@ -497,6 +511,7 @@ function test20() {
 
     createHttpRequest(options, "", 20, 200, SUCCESS_STATUS, ['updated todo', 'second todo - active']);
 }
+
 
 // delete all the not completed tasks
 function test21() {
@@ -558,6 +573,8 @@ function testLoginPage() {
     }, 1000);
 }
 
+
+
 function testTodoPage() {
     test8();
     test9();
@@ -599,6 +616,7 @@ function testTodoPage() {
 
 
 function runTests() {
+
     // start the server (listen on port 8888)
     webServer.startServer;
 

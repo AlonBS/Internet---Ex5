@@ -10,3 +10,10 @@ We had only two small bugs to fix in our ex4:
 2. within the file "hujinet.js" we added the line "response = new httpResponseModule(socket);" after line 16.
    The reason is that in case of the ajax is received an internal error (with status 500), and send another request
    on the same socket, the returned status code was remained 500 (because this is the 'default value' we set).
+
+In addition, we change the following two little things (they are not a real bugs):
+1. it is not a bug, but within the file 'hujidynamicserver.js' we added the options to get '.png' images (line 169) for
+   displaying the 'delete' to-do icon (we could use '.gif' instead..)
+2. within the file "hujiparser.js" after line 117 we added the option to extract the body parameters from json object.
+   we don't really need to use it (instead, we passed body params in the following format: "id=0&value=submit internet
+   ex 5").

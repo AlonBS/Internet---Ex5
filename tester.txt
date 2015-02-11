@@ -1,0 +1,43 @@
+tester
+-------
+
+Tests numbers 1-7 check the login and registration API. Tests numbers 8-22 check the to-do list API (for the
+logged in user).
+
+ test#  return status expected      test description
+ 1      Failure                     trying to login with does not exist username.
+ 2      Failure                     trying to register with a username less than 3 characters length. This check is
+                                    performed both in the client and server side (we do it in the server because we
+                                    don't trust the client to do it. In addition, we do it in the client to reduce the
+                                    server load).
+ 3      Success                     register new username with the following details:
+                                    username: 'liraz', fullname: 'liraz orenstein', password: 'abc123456'
+ 4      Failure                     trying to register another user with the same username ('liraz').
+ 5      Failure                     trying to login again with does not exist username (we verify that although the
+                                    server's data module is not empty, we can't access the to-do list page).
+ 6      Failure                     trying to login with existing username ('liraz') but with wrong password.
+ 7      Success                     login with existing username ('liraz') and password ('abc123456').
+
+
+ 8      Success                     getting 'all' (empty) the to-do list of the logged in user ('liraz').
+ 9      Failure                     trying to received to-do list of some user with does not exist session id
+ 10     Success                     adding a new to-do with the following details:
+                                    id: 0, value: 'submit internet ex 5'
+ 11     Failure                     trying to add another to-do with the same id (0).
+ 12     Success                     verify that the do-do we added was kept in the server, by getting all the user's
+                                    to-do list (contains only this to-do).
+ 13     Success                     update the content and status of the item (id 0).
+ 14     Success                     verify that the do-do we updated was changed in the server as well (by getting all
+                                    the user's to-do list (contains only this to-do)).
+ 15     Failure                     trying to update the content of does not exist item.
+ 16     Success                     adding another to-do with the following details:
+                                    id: 1, value: 'second todo - active'
+ 17     Success                     adding another to-do with the following details:
+                                    id: 2, value: 'third todo'
+ 18     Success                     verify that all the three to-do's were kept in the server.
+ 19     Success                     delete the third to-do (id 2).
+ 20     Success                     verify that the to-do indeed removed from the server (by getting all the user's
+                                    to-do list).
+ 21     Success                     delete all the not completed to-do's.
+ 22     Success                     verify that the first to-do was removed (in test 13 we change its status to be
+                                    'completed'), but the second is exists.

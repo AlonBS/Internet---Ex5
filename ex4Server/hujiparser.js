@@ -112,15 +112,11 @@ exports.parse = function (dataAsString) {
 
         body = temp.substr(0, parseInt(header["content-length"]));
 
-        //if (isJsonString(body)) {     // todo why didn't we support json as part of the body ??
-        //    body = JSON.stringify(body);
-        //}
-        //else {  // i.e, its in 'a=b&c=d' format
-        //    bodyParams = fillParams(body);
-        //}
-
         if (!isJsonString(body)) { // i.e, its in 'a=b&c=d' format
             bodyParams = fillParams(body);
+        }
+        else {
+            bodyParams = fillParamsFromJson(JSON.parse(body), {});
         }
 
         leftData = temp.substr(parseInt(header["content-length"]));
@@ -141,6 +137,22 @@ function isJsonString(str) {
         return false;
     }
     return true;
+}
+
+
+function fillParamsFromJson(json, map) {
+    var key;
+
+    for (key in json) {
+        if (typeof json[key] === 'string') {
+            map[key] = json[key];
+        }
+        else if (typeof json[key] === 'object') {
+            fillParamsFromJson(json[key], map);
+        }
+    }
+
+    return map;
 }
 
 

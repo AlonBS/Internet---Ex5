@@ -10,7 +10,7 @@ var path = require ('path');
 var serverStaticRootFolder = "";
 var shortServerStaticRootFolder = "";
 
-var server; // this dynamic server instance
+var server; // this is a dynamic server instance
 
 
 function getFullPath(shortPath, isStatic) {
@@ -43,13 +43,6 @@ exports.static = function (rootFolder) {
 
     try {
         serverStaticRootFolder = getFullPath(rootFolder, false);
-
-        //// verify that the received root folder  exists
-        //if (!fs.existsSync(serverStaticRootFolder)) {
-        //    writeLog("hujiwebserver", "static", "invalid root folder", true);
-        //
-        //    //return;
-        //}
     } catch (e) {}
 
     return staticResourceHandler;
@@ -94,7 +87,6 @@ var staticResourceHandler = function (request, response, next) {
         });
     })
 };
-
 
 
 exports.myUse = function (resource) {
